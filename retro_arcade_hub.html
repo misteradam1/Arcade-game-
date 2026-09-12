@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Arcade Hub - Play Free Web Games</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        arcade: {
+                            bg: '#0a0a12',
+                            card: '#121224',
+                            accent: '#ff0055',
+                            neonCyan: '#00f0ff',
+                            neonPurple: '#7000ff',
+                            neonYellow: '#ffea00',
+                            neonGreen: '#00ff66'
+                        }
+                    },
+                    fontFamily: {
+                        retro: ['"Press Start 2P"', 'cursive'],
+                        sans: ['Outfit', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0a0a12;
+            color: #f3f4f6;
+            font-family: 'Outfit', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .text-glow-cyan {
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.7), 0 0 20px rgba(0, 240, 255, 0.4);
+        }
+
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(112, 0, 255, 0.4), 0 8px 10px -6px rgba(0, 240, 255, 0.3);
+        }
+
+        /* Retro Scanline effect */
+        .scanline-overlay {
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a12;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a2a4a;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f0ff;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-arcade-accent selection:text-white relative">
+
+    <!-- Background overlay effects -->
+    <div class="fixed inset-0 scanline-overlay z-50 opacity-30"></div>
+    <div class="fixed inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-arcade-neonPurple/20 via-transparent to-transparent -z-10 pointer-events-none"></div>
+
+    <header class="border-b border-gray-800 bg-arcade-bg/90 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <!-- Brand / Logo -->
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="resetFilters()">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-arcade-accent to-arcade-neonPurple flex items-center justify-center text-white text-xl shadow-lg shadow-arcade-accent/30">
+                    <i class="fa-solid fa-gamepad animate-pulse"></i>
+                </div>
+                <div>
+                    <h1 class="font-retro text-lg sm:text-xl text-transparent bg-clip-text bg-gradient-to-r from-arcade-neonCyan via-white to-arcade-accent text-glow-cyan">
+                        ARCADE<span class="text-arcade-accent">HUB</span>
+                    </h1>
+                    <p class="text-xs text-gray-400 -mt-1 font-mono">Ready for GitHub Pages</p>
+                </div>
+            </div>
+
+            <!-- Global Actions & Audio Toggle -->
+            <div class="flex items-center gap-3">
+                <button id="sound-btn" onclick="toggleAudio()" class="px-3 py-1.5 rounded-lg border border-gray-700 bg-gray-800/50 hover:bg-gray-700/50 text-xs text-gray-300 transition flex items-center gap-1.5">
+                    <i id="sound-icon" class="fa-solid fa-volume-high text-arcade-neonCyan"></i>
+                    <span id="sound-text">Audio: ON</span>
+                </button>
+                <button onclick="openHelpModal()" class="px-3 py-1.5 rounded-lg border border-gray-700 bg-gray-800/50 hover:bg-gray-700/50 text-xs text-gray-300 transition flex items-center gap-1.5">
+                    <i class="fa-brands fa-github text-arcade-neonPurple"></i> How to Host
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+        <div class="mb-8">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+                <div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
+                        <span>Arcade Classics Collection</span>
+                        <span class="text-xs font-normal font-mono px-2 py-0.5 rounded bg-arcade-accent/20 border border-arcade-accent/40 text-arcade-accent">HTML5 & Canvas</span>
+                    </h2>
+                    <p class="text-gray-400 text-sm mt-1">Play mini-games directly in your browser with high scores saved locally.</p>
+                </div>
+
+                <!-- Search Input -->
+                <div class="relative w-full md:w-72">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                    <input type="text" id="game-search" oninput="filterGames()" placeholder="Search games..." class="w-full bg-arcade-card border border-gray-700 rounded-xl pl-9 pr-4 py-2 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-arcade-neonCyan transition">
+                </div>
+            </div>
+
+            <!-- Category Filter Tabs -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none" id="category-tabs">
+                <button onclick="setCategory('all')" data-category="all" class="category-btn active px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider bg-arcade-neonCyan text-black transition">
+                    <i class="fa-solid fa-border-all mr-1.5"></i> All Games
+                </button>
+                <button onclick="setCategory('arcade')" data-category="arcade" class="category-btn px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider bg-arcade-card border border-gray-800 text-gray-400 hover:text-white transition">
+                    <i class="fa-solid fa-ghost mr-1.5"></i> Arcade
+                </button>
+                <button onclick="setCategory('action')" data-category="action" class="category-btn px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider bg-arcade-card border border-gray-800 text-gray-400 hover:text-white transition">
+                    <i class="fa-solid fa-bolt mr-1.5"></i> Action
+                </button>
+                <button onclick="setCategory('puzzle')" data-category="puzzle" class="category-btn px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider bg-arcade-card border border-gray-800 text-gray-400 hover:text-white transition">
+                    <i class="fa-solid fa-brain mr-1.5"></i> Puzzle
+                </button>
+            </div>
+        </div>
+
+        <div id="games-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+            
+            <!-- Game 1: Snake -->
+            <div class="game-card bg-arcade-card border border-gray-800 rounded-2xl p-4 flex flex-col justify-between card-hover" data-name="snake retro classic neon" data-category="arcade">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-arcade-neonGreen animate-ping"></span>
+                            <h3 class="font-bold text-lg text-white">Retro Snake</h3>
+                        </div>
+                        <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-800 text-arcade-neonGreen border border-gray-700">Arcade</span>
+                    </div>
+                    
+                    <div id="snake-container" class="relative bg-black rounded-xl overflow-hidden border border-gray-800 aspect-video flex items-center justify-center">
+                        <canvas id="snake-canvas" width="320" height="180" class="w-full h-full object-contain"></canvas>
+                        
+                        <div id="snake-overlay" class="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center z-10">
+                            <i class="fa-solid fa-worm text-3xl text-arcade-neonGreen mb-2"></i>
+                            <h4 id="snake-title" class="font-retro text-xs text-white mb-2">NEON SNAKE</h4>
+                            <p class="text-xs text-gray-400 mb-4">Use Arrow Keys or WASD to Move</p>
+                            <button onclick="startSnake()" class="px-4 py-2 bg-arcade-neonGreen text-black font-bold text-xs rounded-lg uppercase tracking-wider hover:bg-emerald-400 transition transform active:scale-95 shadow-lg shadow-arcade-neonGreen/20">
+                                Play Game
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-gray-800/80 flex items-center justify-between text-xs font-mono">
+                    <div class="text-gray-400">Score: <span id="snake-score" class="text-white font-bold">0</span></div>
+                    <div class="text-gray-400"><i class="fa-solid fa-trophy text-arcade-neonYellow"></i> High: <span id="snake-high" class="text-arcade-neonYellow font-bold">0</span></div>
+                </div>
+            </div>
+
+            <!-- Game 2: Pong -->
+            <div class="game-card bg-arcade-card border border-gray-800 rounded-2xl p-4 flex flex-col justify-between card-hover" data-name="pong cyber action paddle ai" data-category="action">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-arcade-neonCyan animate-ping"></span>
+                            <h3 class="font-bold text-lg text-white">Cyber Pong vs AI</h3>
+                        </div>
+                        <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-800 text-arcade-neonCyan border border-gray-700">Action</span>
+                    </div>
+                    
+                    <div id="pong-container" class="relative bg-black rounded-xl overflow-hidden border border-gray-800 aspect-video flex items-center justify-center">
+                        <canvas id="pong-canvas" width="320" height="180" class="w-full h-full object-contain"></canvas>
+                        
+                        <div id="pong-overlay" class="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center z-10">
+                            <i class="fa-solid fa-table-tennis-paddle-ball text-3xl text-arcade-neonCyan mb-2"></i>
+                            <h4 id="pong-title" class="font-retro text-xs text-white mb-2">CYBER PONG</h4>
+                            <p class="text-xs text-gray-400 mb-4">Move mouse or drag touch to control paddle</p>
+                            <button onclick="startPong()" class="px-4 py-2 bg-arcade-neonCyan text-black font-bold text-xs rounded-lg uppercase tracking-wider hover:bg-cyan-300 transition transform active:scale-95 shadow-lg shadow-arcade-neonCyan/20">
+                                Play Game
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-gray-800/80 flex items-center justify-between text-xs font-mono">
+                    <div class="text-gray-400">Score: <span id="pong-score" class="text-white font-bold">0</span></div>
+                    <div class="text-gray-400"><i class="fa-solid fa-trophy text-arcade-neonYellow"></i> High: <span id="pong-high" class="text-arcade-neonYellow font-bold">0</span></div>
+                </div>
+            </div>
+
+            <!-- Game 3: Brick Breaker -->
+            <div class="game-card bg-arcade-card border border-gray-800 rounded-2xl p-4 flex flex-col justify-between card-hover" data-name="brick breaker breakout arcade" data-category="arcade">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-arcade-accent animate-ping"></span>
+                            <h3 class="font-bold text-lg text-white">Brick Breaker</h3>
+                        </div>
+                        <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-800 text-arcade-accent border border-gray-700">Arcade</span>
+                    </div>
+                    
+                    <div id="brick-container" class="relative bg-black rounded-xl overflow-hidden border border-gray-800 aspect-video flex items-center justify-center">
+                        <canvas id="brick-canvas" width="320" height="180" class="w-full h-full object-contain"></canvas>
+                        
+                        <div id="brick-overlay" class="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center z-10">
+                            <i class="fa-solid fa-cubes text-3xl text-arcade-accent mb-2"></i>
+                            <h4 id="brick-title" class="font-retro text-xs text-white mb-2">NEON BREAKOUT</h4>
+                            <p class="text-xs text-gray-400 mb-4">Use Mouse or Touch drag to move paddle</p>
+                            <button onclick="startBrick()" class="px-4 py-2 bg-arcade-accent text-white font-bold text-xs rounded-lg uppercase tracking-wider hover:bg-pink-600 transition transform active:scale-95 shadow-lg shadow-arcade-accent/20">
+                                Play Game
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-gray-800/80 flex items-center justify-between text-xs font-mono">
+                    <div class="text-gray-400">Score: <span id="brick-score" class="text-white font-bold">0</span></div>
+                    <div class="text-gray-400"><i class="fa-solid fa-trophy text-arcade-neonYellow"></i> High: <span id="brick-high" class="text-arcade-neonYellow font-bold">0</span></div>
+                </div>
+            </div>
+
+            <!-- Game 4: Memory Cards -->
+            <div class="game-card bg-arcade-card border border-gray-800 rounded-2xl p-4 flex flex-col justify-between card-hover" data-name="memory card game match brain puzzle" data-category="puzzle">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-arcade-neonYellow animate-ping"></span>
+                            <h3 class="font-bold text-lg text-white">Memory Match</h3>
+                        </div>
+                        <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-800 text-arcade-neonYellow border border-gray-700">Puzzle</span>
+                    </div>
+                    
+                    <div class="relative bg-black rounded-xl overflow-hidden border border-gray-800 aspect-video flex items-center justify-center p-2">
+                        <div id="memory-grid" class="w-full h-full grid grid-cols-4 gap-1.5 p-1">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                        
+                        <div id="memory-overlay" class="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center z-10">
+                            <i class="fa-solid fa-brain text-3xl text-arcade-neonYellow mb-2"></i>
+                            <h4 id="memory-title" class="font-retro text-xs text-white mb-2">CYBER MEMORY</h4>
+                            <p class="text-xs text-gray-400 mb-4">Find all pairs with fewest moves</p>
+                            <button onclick="startMemory()" class="px-4 py-2 bg-arcade-neonYellow text-black font-bold text-xs rounded-lg uppercase tracking-wider hover:bg-yellow-400 transition transform active:scale-95 shadow-lg shadow-arcade-neonYellow/20">
+                                Play Game
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-gray-800/80 flex items-center justify-between text-xs font-mono">
+                    <div class="text-gray-400">Moves: <span id="memory-score" class="text-white font-bold">0</span></div>
+                    <div class="text-gray-400"><i class="fa-solid fa-trophy text-arcade-neonYellow"></i> Best Moves: <span id="memory-high" class="text-arcade-neonYellow font-bold">--</span></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <div id="help-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-arcade-card border border-gray-700 rounded-2xl max-w-lg w-full p-6 relative shadow-2xl">
+            <button onclick="closeHelpModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex items-center gap-3 mb-4">
+                <div class="p-2.5 bg-arcade-neonPurple/20 text-arcade-neonCyan rounded-xl border border-arcade-neonPurple/40">
+                    <i class="fa-brands fa-github text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white">Host Free on GitHub Pages</h3>
+                    <p class="text-xs text-gray-400">Publish this site online in 5 easy steps</p>
+                </div>
+            </div>
+            
+            <div class="space-y-3 text-xs text-gray-300 font-mono bg-black/40 p-4 rounded-xl border border-gray-800">
+                <p><span class="text-arcade-neonCyan font-bold">1.</span> Create a GitHub repository named <code class="bg-gray-800 px-1.5 py-0.5 rounded text-arcade-neonGreen">my-arcade</code>.</p>
+                <p><span class="text-arcade-neonCyan font-bold">2.</span> Save this entire code into a file named <code class="bg-gray-800 px-1.5 py-0.5 rounded text-arcade-neonYellow">index.html</code>.</p>
+                <p><span class="text-arcade-neonCyan font-bold">3.</span> Upload <code class="text-white">index.html</code> to your repository.</p>
+                <p><span class="text-arcade-neonCyan font-bold">4.</span> Go to <strong class="text-white">Settings > Pages</strong>, select the <strong class="text-white">main</strong> branch and hit Save.</p>
+                <p><span class="text-arcade-neonCyan font-bold">5.</span> Your live arcade is ready at: <code class="text-arcade-neonGreen break-all">https://username.github.io/my-arcade/</code></p>
+            </div>
+
+            <div class="mt-5 flex justify-end">
+                <button onclick="closeHelpModal()" class="px-4 py-2 bg-arcade-neonCyan text-black font-semibold rounded-lg text-xs hover:bg-cyan-300 transition">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="border-t border-gray-800/60 bg-arcade-bg/90 py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-gray-500 font-mono">
+            <p>Single-file Web App • Pure HTML5 Canvas & Web Audio API • Ideal for GitHub Pages</p>
+        </div>
+    </footer>
+
+    <script>
+        /* Audio Synthesizer (Web Audio API) */
+        let audioCtx = null;
+        let soundEnabled = true;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioCtx;
+        }
+
+        function playBeep(freq, type = 'sine', duration = 0.1) {
+            if (!soundEnabled) return;
+            try {
+                const ctx = getAudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + duration);
+            } catch (e) {}
+        }
+
+        function toggleAudio() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('sound-text').textContent = `Audio: ${soundEnabled ? 'ON' : 'OFF'}`;
+            document.getElementById('sound-icon').className = soundEnabled ? 'fa-solid fa-volume-high text-arcade-neonCyan' : 'fa-solid fa-volume-xmark text-gray-500';
+        }
+
+        /* Persistent High Scores */
+        const scores = {
+            snake: localStorage.getItem('arcade_snake_high') || 0,
+            pong: localStorage.getItem('arcade_pong_high') || 0,
+            brick: localStorage.getItem('arcade_brick_high') || 0,
+            memory: localStorage.getItem('arcade_memory_high') || null
+        };
+
+        function updateHighScoreDisplay() {
+            document.getElementById('snake-high').textContent = scores.snake;
+            document.getElementById('pong-high').textContent = scores.pong;
+            document.getElementById('brick-high').textContent = scores.brick;
+            document.getElementById('memory-high').textContent = scores.memory ? scores.memory : '--';
+        }
+        updateHighScoreDisplay();
+
+        /* Search & Filters */
+        function filterGames() {
+            const query = document.getElementById('game-search').value.toLowerCase();
+            const cards = document.querySelectorAll('.game-card');
+            cards.forEach(card => {
+                const name = card.getAttribute('data-name');
+                card.style.display = name.includes(query) ? 'flex' : 'none';
+            });
+        }
+
+        function setCategory(category) {
+            const tabs = document.querySelectorAll('.category-btn');
+            tabs.forEach(tab => {
+                if (tab.getAttribute('data-category') === category) {
+                    tab.className = 'category-btn active px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider bg-arcade-neonCyan text-black transition';
+                } else {
+                    tab.className = 'category-btn px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider bg-arcade-card border border-gray-800 text-gray-400 hover:text-white transition';
+                }
+            });
+
+            const cards = document.querySelectorAll('.game-card');
+            cards.forEach(card => {
+                const cardCat = card.getAttribute('data-category');
+                card.style.display = (category === 'all' || cardCat === category) ? 'flex' : 'none';
+            });
+        }
+
+        function resetFilters() {
+            document.getElementById('game-search').value = '';
+            setCategory('all');
+        }
+
+        function openHelpModal() {
+            document.getElementById('help-modal').classList.remove('hidden');
+        }
+
+        function closeHelpModal() {
+            document.getElementById('help-modal').classList.add('hidden');
+        }
+
+        /* -------------------------------------------------------------
+           GAME 1: RETRO SNAKE
+        ------------------------------------------------------------- */
+        let snakeInterval = null;
+        function startSnake() {
+            const canvas = document.getElementById('snake-canvas');
+            const ctx = canvas.getContext('2d');
+            document.getElementById('snake-overlay').classList.add('hidden');
+
+            const gridSize = 10;
+            const tileCountX = canvas.width / gridSize;
+            const tileCountY = canvas.height / gridSize;
+
+            let snake = [{x: 10, y: 9}, {x: 9, y: 9}];
+            let dx = 1, dy = 0;
+            let food = {x: 20, y: 9};
+            let score = 0;
+
+            document.getElementById('snake-score').textContent = score;
+
+            function handleKey(e) {
+                if ((e.key === 'ArrowUp' || e.key === 'w') && dy === 0) { dx = 0; dy = -1; e.preventDefault(); }
+                if ((e.key === 'ArrowDown' || e.key === 's') && dy === 0) { dx = 0; dy = 1; e.preventDefault(); }
+                if ((e.key === 'ArrowLeft' || e.key === 'a') && dx === 0) { dx = -1; dy = 0; e.preventDefault(); }
+                if ((e.key === 'ArrowRight' || e.key === 'd') && dx === 0) { dx = 1; dy = 0; e.preventDefault(); }
+            }
+
+            window.removeEventListener('keydown', handleKey);
+            window.addEventListener('keydown', handleKey);
+
+            if (snakeInterval) clearInterval(snakeInterval);
+
+            snakeInterval = setInterval(() => {
+                const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+
+                // Check collisions with wall or self
+                if (head.x < 0 || head.x >= tileCountX || head.y < 0 || head.y >= tileCountY || snake.some(s => s.x === head.x && s.y === head.y)) {
+                    clearInterval(snakeInterval);
+                    playBeep(150, 'sawtooth', 0.3);
+                    document.getElementById('snake-title').textContent = "GAME OVER";
+                    document.getElementById('snake-overlay').classList.remove('hidden');
+
+                    if (score > scores.snake) {
+                        scores.snake = score;
+                        localStorage.setItem('arcade_snake_high', score);
+                        updateHighScoreDisplay();
+                    }
+                    return;
+                }
+
+                snake.unshift(head);
+
+                // Eat food
+                if (head.x === food.x && head.y === food.y) {
+                    score += 10;
+                    playBeep(587, 'square', 0.1);
+                    document.getElementById('snake-score').textContent = score;
+                    food = {
+                        x: Math.floor(Math.random() * tileCountX),
+                        y: Math.floor(Math.random() * tileCountY)
+                    };
+                } else {
+                    snake.pop();
+                }
+
+                // Render Canvas
+                ctx.fillStyle = '#05050d';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Draw Food
+                ctx.fillStyle = '#ff0055';
+                ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 1, gridSize - 1);
+
+                // Draw Snake
+                ctx.fillStyle = '#00ff66';
+                snake.forEach(part => {
+                    ctx.fillRect(part.x * gridSize, part.y * gridSize, gridSize - 1, gridSize - 1);
+                });
+
+            }, 80);
+        }
+
+        /* -------------------------------------------------------------
+           GAME 2: CYBER PONG VS AI
+        ------------------------------------------------------------- */
+        let pongAnimationFrame = null;
+        function startPong() {
+            const canvas = document.getElementById('pong-canvas');
+            const ctx = canvas.getContext('2d');
+            document.getElementById('pong-overlay').classList.add('hidden');
+
+            const paddleWidth = 6, paddleHeight = 40;
+            let playerY = (canvas.height - paddleHeight) / 2;
+            let aiY = (canvas.height - paddleHeight) / 2;
+
+            let ballX = canvas.width / 2, ballY = canvas.height / 2;
+            let ballSpeedX = 3, ballSpeedY = 2;
+            let score = 0;
+
+            const updatePaddlePos = (clientY) => {
+                const rect = canvas.getBoundingClientRect();
+                playerY = (clientY - rect.top) * (canvas.height / rect.height) - paddleHeight / 2;
+                playerY = Math.max(0, Math.min(canvas.height - paddleHeight, playerY));
+            };
+
+            canvas.onmousemove = (e) => updatePaddlePos(e.clientY);
+            canvas.ontouchmove = (e) => {
+                if (e.touches.length > 0) updatePaddlePos(e.touches[0].clientY);
+            };
+
+            function gameLoop() {
+                ballX += ballSpeedX;
+                ballY += ballSpeedY;
+
+                // AI Tracking
+                const aiCenter = aiY + paddleHeight / 2;
+                if (aiCenter < ballY - 10) aiY += 2.2;
+                else if (aiCenter > ballY + 10) aiY -= 2.2;
+
+                // Wall bounces
+                if (ballY <= 0 || ballY >= canvas.height) {
+                    ballSpeedY = -ballSpeedY;
+                    playBeep(300, 'sine', 0.05);
+                }
+
+                // Player paddle hit
+                if (ballX <= paddleWidth + 10 && ballY >= playerY && ballY <= playerY + paddleHeight) {
+                    ballSpeedX = -ballSpeedX * 1.05;
+                    score += 5;
+                    playBeep(440, 'triangle', 0.08);
+                    document.getElementById('pong-score').textContent = score;
+                }
+
+                // AI paddle hit
+                if (ballX >= canvas.width - paddleWidth - 10 && ballY >= aiY && ballY <= aiY + paddleHeight) {
+                    ballSpeedX = -ballSpeedX;
+                    playBeep(350, 'triangle', 0.08);
+                }
+
+                // Game Over (Player missed)
+                if (ballX < 0) {
+                    cancelAnimationFrame(pongAnimationFrame);
+                    playBeep(180, 'sawtooth', 0.3);
+                    document.getElementById('pong-title').textContent = "GAME OVER";
+                    document.getElementById('pong-overlay').classList.remove('hidden');
+
+                    if (score > scores.pong) {
+                        scores.pong = score;
+                        localStorage.setItem('arcade_pong_high', score);
+                        updateHighScoreDisplay();
+                    }
+                    return;
+                }
+
+                // Reset ball if AI missed
+                if (ballX > canvas.width) {
+                    ballX = canvas.width / 2;
+                    ballY = canvas.height / 2;
+                    ballSpeedX = -3;
+                }
+
+                // Clear & Draw
+                ctx.fillStyle = '#05050d';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = '#00f0ff';
+                ctx.fillRect(10, playerY, paddleWidth, paddleHeight);
+
+                ctx.fillStyle = '#ff0055';
+                ctx.fillRect(canvas.width - paddleWidth - 10, aiY, paddleWidth, paddleHeight);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(ballX, ballY, 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                pongAnimationFrame = requestAnimationFrame(gameLoop);
+            }
+
+            if (pongAnimationFrame) cancelAnimationFrame(pongAnimationFrame);
+            pongAnimationFrame = requestAnimationFrame(gameLoop);
+        }
+
+        /* -------------------------------------------------------------
+           GAME 3: BRICK BREAKER
+        ------------------------------------------------------------- */
+        let brickAnimationFrame = null;
+        function startBrick() {
+            const canvas = document.getElementById('brick-canvas');
+            const ctx = canvas.getContext('2d');
+            document.getElementById('brick-overlay').classList.add('hidden');
+
+            const paddleWidth = 50, paddleHeight = 6;
+            let paddleX = (canvas.width - paddleWidth) / 2;
+
+            let x = canvas.width / 2;
+            let y = canvas.height - 30;
+            let dx = 2, dy = -2;
+            let score = 0;
+
+            const rowCount = 3, colCount = 7, brickWidth = 38, brickHeight = 10, brickPadding = 6, offsetTop = 20, offsetLeft = 10;
+
+            let bricks = [];
+            for (let c = 0; c < colCount; c++) {
+                bricks[c] = [];
+                for (let r = 0; r < rowCount; r++) {
+                    bricks[c][r] = { x: 0, y: 0, status: 1 };
+                }
+            }
+
+            const updatePaddleX = (clientX) => {
+                const rect = canvas.getBoundingClientRect();
+                paddleX = (clientX - rect.left) * (canvas.width / rect.width) - paddleWidth / 2;
+                paddleX = Math.max(0, Math.min(canvas.width - paddleWidth, paddleX));
+            };
+
+            canvas.onmousemove = (e) => updatePaddleX(e.clientX);
+            canvas.ontouchmove = (e) => {
+                if (e.touches.length > 0) updatePaddleX(e.touches[0].clientX);
+            };
+
+            function drawBricks() {
+                for (let c = 0; c < colCount; c++) {
+                    for (let r = 0; r < rowCount; r++) {
+                        if (bricks[c][r].status === 1) {
+                            let brickX = c * (brickWidth + brickPadding) + offsetLeft;
+                            let brickY = r * (brickHeight + brickPadding) + offsetTop;
+                            bricks[c][r].x = brickX;
+                            bricks[c][r].y = brickY;
+                            ctx.fillStyle = r === 0 ? '#ff0055' : r === 1 ? '#7000ff' : '#00f0ff';
+                            ctx.fillRect(brickX, brickY, brickWidth, brickHeight);
+                        }
+                    }
+                }
+            }
+
+            function collisionDetection() {
+                for (let c = 0; c < colCount; c++) {
+                    for (let r = 0; r < rowCount; r++) {
+                        let b = bricks[c][r];
+                        if (b.status === 1) {
+                            if (x > b.x && x < b.x + brickWidth && y > b.y && y < b.y + brickHeight) {
+                                dy = -dy;
+                                b.status = 0;
+                                score += 10;
+                                playBeep(520, 'square', 0.08);
+                                document.getElementById('brick-score').textContent = score;
+
+                                if (score === rowCount * colCount * 10) {
+                                    cancelAnimationFrame(brickAnimationFrame);
+                                    playBeep(880, 'sine', 0.4);
+                                    document.getElementById('brick-title').textContent = "YOU WIN!";
+                                    document.getElementById('brick-overlay').classList.remove('hidden');
+                                    saveBrickScore(score);
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            function saveBrickScore(finalScore) {
+                if (finalScore > scores.brick) {
+                    scores.brick = finalScore;
+                    localStorage.setItem('arcade_brick_high', finalScore);
+                    updateHighScoreDisplay();
+                }
+            }
+
+            function draw() {
+                ctx.fillStyle = '#05050d';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                drawBricks();
+                collisionDetection();
+
+                // Ball
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Paddle
+                ctx.fillStyle = '#ff0055';
+                ctx.fillRect(paddleX, canvas.height - paddleHeight - 5, paddleWidth, paddleHeight);
+
+                if (x + dx > canvas.width - 4 || x + dx < 4) {
+                    dx = -dx;
+                    playBeep(250, 'sine', 0.05);
+                }
+                if (y + dy < 4) {
+                    dy = -dy;
+                    playBeep(250, 'sine', 0.05);
+                } else if (y + dy > canvas.height - paddleHeight - 9) {
+                    if (x > paddleX && x < paddleX + paddleWidth) {
+                        dy = -dy;
+                        playBeep(400, 'triangle', 0.08);
+                    } else {
+                        cancelAnimationFrame(brickAnimationFrame);
+                        playBeep(140, 'sawtooth', 0.3);
+                        document.getElementById('brick-title').textContent = "GAME OVER";
+                        document.getElementById('brick-overlay').classList.remove('hidden');
+                        saveBrickScore(score);
+                        return;
+                    }
+                }
+
+                x += dx;
+                y += dy;
+                brickAnimationFrame = requestAnimationFrame(draw);
+            }
+
+            if (brickAnimationFrame) cancelAnimationFrame(brickAnimationFrame);
+            draw();
+        }
+
+        /* -------------------------------------------------------------
+           GAME 4: MEMORY MATCH
+        ------------------------------------------------------------- */
+        function startMemory() {
+            document.getElementById('memory-overlay').classList.add('hidden');
+            const grid = document.getElementById('memory-grid');
+            grid.innerHTML = '';
+
+            const icons = ['fa-ghost', 'fa-gamepad', 'fa-bolt', 'fa-heart', 'fa-star', 'fa-skull'];
+            const deck = [...icons, ...icons].sort(() => Math.random() - 0.5);
+
+            let firstCard = null, secondCard = null;
+            let lockBoard = false;
+            let moves = 0;
+            let matches = 0;
+
+            document.getElementById('memory-score').textContent = moves;
+
+            deck.forEach((icon) => {
+                const card = document.createElement('div');
+                card.className = 'bg-gray-800 rounded-lg flex items-center justify-center cursor-pointer text-gray-800 transition transform duration-200 hover:scale-105 select-none';
+                card.dataset.icon = icon;
+                card.innerHTML = `<i class="fa-solid ${icon} text-lg opacity-0 transition duration-200"></i>`;
+
+                card.onclick = () => {
+                    if (lockBoard || card === firstCard || card.classList.contains('matched')) return;
+
+                    playBeep(600, 'sine', 0.05);
+                    card.classList.remove('bg-gray-800');
+                    card.classList.add('bg-arcade-neonYellow', 'text-black');
+                    card.querySelector('i').classList.remove('opacity-0');
+
+                    if (!firstCard) {
+                        firstCard = card;
+                        return;
+                    }
+
+                    secondCard = card;
+                    moves++;
+                    document.getElementById('memory-score').textContent = moves;
+                    lockBoard = true;
+
+                    if (firstCard.dataset.icon === secondCard.dataset.icon) {
+                        playBeep(800, 'triangle', 0.15);
+                        firstCard.classList.add('matched');
+                        secondCard.classList.add('matched');
+                        resetTurn();
+                        matches++;
+
+                        if (matches === icons.length) {
+                            setTimeout(() => {
+                                playBeep(1000, 'sine', 0.4);
+                                document.getElementById('memory-title').textContent = "COMPLETED!";
+                                document.getElementById('memory-overlay').classList.remove('hidden');
+
+                                if (!scores.memory || moves < scores.memory) {
+                                    scores.memory = moves;
+                                    localStorage.setItem('arcade_memory_high', moves);
+                                    updateHighScoreDisplay();
+                                }
+                            }, 500);
+                        }
+                    } else {
+                        setTimeout(() => {
+                            firstCard.className = 'bg-gray-800 rounded-lg flex items-center justify-center cursor-pointer text-gray-800 transition transform duration-200 hover:scale-105 select-none';
+                            firstCard.querySelector('i').classList.add('opacity-0');
+
+                            secondCard.className = 'bg-gray-800 rounded-lg flex items-center justify-center cursor-pointer text-gray-800 transition transform duration-200 hover:scale-105 select-none';
+                            secondCard.querySelector('i').classList.add('opacity-0');
+
+                            resetTurn();
+                        }, 700);
+                    }
+                };
+
+                grid.appendChild(card);
+            });
+
+            function resetTurn() {
+                [firstCard, secondCard] = [null, null];
+                lockBoard = false;
+            }
+        }
+    </script>
+</body>
+</html>
