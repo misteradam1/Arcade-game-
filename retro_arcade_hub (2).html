@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Arcade Hub - 12 Classic Games</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        arcade: {
+                            bg: '#07070e',
+                            card: '#10101d',
+                            glass: 'rgba(18, 18, 36, 0.75)',
+                            accent: '#ff0055',
+                            neonCyan: '#00f0ff',
+                            neonPurple: '#8000ff',
+                            neonYellow: '#ffea00',
+                            neonGreen: '#00ff66',
+                            neonOrange: '#ff6600'
+                        }
+                    },
+                    fontFamily: {
+                        retro: ['"Press Start 2P"', 'cursive'],
+                        sans: ['Outfit', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #07070e;
+            color: #f3f4f6;
+            font-family: 'Outfit', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .glow-cyan { text-shadow: 0 0 12px rgba(0, 240, 255, 0.8), 0 0 24px rgba(0, 240, 255, 0.4); }
+        .glow-pink { text-shadow: 0 0 12px rgba(255, 0, 85, 0.8), 0 0 24px rgba(255, 0, 85, 0.4); }
+
+        .card-hover {
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-6px) scale(1.01);
+            box-shadow: 0 12px 30px -5px rgba(128, 0, 255, 0.4), 0 0 20px 0 rgba(0, 240, 255, 0.2);
+        }
+
+        .scanline-overlay {
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #07070e; }
+        ::-webkit-scrollbar-thumb { background: #23233c; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00f0ff; }
+
+        canvas { touch-action: none; user-select: none; }
+
+        .game-container:-webkit-full-screen { width: 100vw; height: 100vh; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .game-container:-moz-full-screen { width: 100vw; height: 100vh; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .game-container:fullscreen { width: 100vw; height: 100vh; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-arcade-accent selection:text-white relative">
+
+    <div class="fixed inset-0 scanline-overlay z-50 opacity-20 pointer-events-none"></div>
+    <div class="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-arcade-neonPurple/25 via-arcade-bg to-arcade-bg -z-10 pointer-events-none"></div>
+
+    <!-- Header Section -->
+    <header class="border-b border-gray-800/80 bg-arcade-bg/85 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="resetFilters()">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-arcade-accent via-arcade-neonPurple to-arcade-neonCyan flex items-center justify-center text-white text-xl shadow-lg shadow-arcade-neonPurple/40">
+                    <i class="fa-solid fa-gamepad animate-pulse"></i>
+                </div>
+                <div>
+                    <h1 class="font-retro text-lg sm:text-xl text-transparent bg-clip-text bg-gradient-to-r from-arcade-neonCyan via-white to-arcade-accent glow-cyan">
+                        ARCADE<span class="text-arcade-accent">HUB</span>
+                    </h1>
+                    <p class="text-xs text-gray-400 -mt-1 font-mono">12 HD Web Classics & Sports</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button id="sound-btn" onclick="toggleAudio()" class="px-3 py-1.5 rounded-xl border border-gray-700/80 bg-gray-900/60 hover:bg-gray-800 text-xs text-gray-300 transition flex items-center gap-2 shadow-sm">
+                    <i id="sound-icon" class="fa-solid fa-volume-high text-arcade-neonCyan"></i>
+                    <span id="sound-text" class="font-mono">AUDIO: ON</span>
+                </button>
+                <button onclick="openHelpModal()" class="px-3 py-1.5 rounded-xl border border-gray-700/80 bg-gray-900/60 hover:bg-gray-800 text-xs text-gray-300 transition flex items-center gap-2 shadow-sm">
+                    <i class="fa-brands fa-github text-arcade-neonPurple"></i>
+                    <span class="font-mono">GitHub Pages</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
+        <div class="mb-8">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+                <div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
+                        <span>Arcade & Sports Stadium</span>
+                        <span class="text-xs font-normal font-mono px-2.5 py-0.5 rounded-full bg-arcade-accent/20 border border-arcade-accent/40 text-arcade-accent">12 Games</span>
+                    </h2>
+                    <p class="text-gray-400 text-sm mt-1">HD HTML5 Canvas sports & arcade classics with full screen support, audio FX, and high scores.</p>
+                </div>
+
+                <div class="relative w-full md:w-72">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                    <input type="text" id="game-search" oninput="filterGames()" placeholder="Search 12 arcade games..." class="w-full bg-arcade-card/80 border border-gray-800 rounded-xl pl-10 pr-4 py-2 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-arcade-neonCyan transition">
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none" id="category-tabs">
+                <button onclick="setCategory('all')" data-category="all" class="category-btn active px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider bg-arcade-neonCyan text-black transition shadow-lg shadow-arcade-neonCyan/20">
+                    <i class="fa-solid fa-border-all mr-1.5"></i> All (12)
+                </button>
+                <button onclick="setCategory('sports')" data-category="sports" class="category-btn px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider bg-arcade-card border border-gray-800 text-gray-400 hover:text-white transition">
+                    <i class="fa-solid fa-trophy mr-1.5"></i> Sports (5)
+                </button>
+                <button onclick="setCategory('arcade')" data-category="arcade" class="category-btn px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider bg-arcade-card border border-gray-800 text-gray-400 hover:text-white transition">
+                    <i class="fa-solid fa-ghost mr-1.5"></i> Arcade (3)
+                </button>
+                <button onclick="setCategory('action')" data-category="action" class="category-btn px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider bg-arcade-card border border-gray-800 text-gray-400 hover:text-white transition">
+                    <i class="fa-solid fa-bolt mr-1.5"></i> Action (2)
+                </button>
+                <button onclick="setCategory('puzzle')" data-category="puzzle" class="category-btn px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider bg-arcade-card border border-gray-800 text-gray-400 hover:text-white transition">
+                    <i class="fa-solid fa-brain mr-1.5"></i> Puzzle (2)
+                </button>
+            </div>
+        </div>
+
+        <div id="games-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            <!-- Game 1: Soccer Penalties -->
+            <div class="game-card bg-arcade-card border border-gray-800/80 rounded-2xl p-4 flex flex-col justify-between card-hover relative overflow-hidden" data-name="mini soccer penalty shootout football sports goal goalkeeper" data-category="sports">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-arcade-neonGreen animate-ping"></span>
+                            <h3 class="font-bold text-lg text-white">Soccer Penalties</h3>
+                        </div>
+                        <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-800 text-arcade-neonGreen border border-gray-700">Sports</span>
+                    </div>
+                    
+                    <div id="soccer-container" class="game-container relative bg-black rounded-xl overflow-hidden border border-gray-800 aspect-video flex items-center justify-center">
+                        <button onclick="toggleFullscreen('soccer-container')" class="absolute top-2 right-2 z-20 text-gray-400 hover:text-white bg-black/60 p-1.5 rounded-lg border border-gray-700/50 backdrop-blur-xs transition">
+                            <i class="fa-solid fa-expand text-xs"></i>
+                        </button>
+                        <canvas id="soccer-canvas" width="360" height="202" class="w-full h-full object-contain"></canvas>
+                        
+                        <div id="soccer-overlay" class="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center z-10">
+                            <i class="fa-solid fa-futbol text-4xl text-arcade-neonGreen mb-2 animate-bounce"></i>
+                            <h4 id="soccer-title" class="font-retro text-xs text-white mb-2">PENALTY SHOOTOUT</h4>
+                            <p class="text-xs text-gray-400 mb-4">Click / Drag & Release to Shoot Ball</p>
+                            <button onclick="startSoccer()" class="px-5 py-2.5 bg-arcade-neonGreen text-black font-bold text-xs rounded-xl uppercase tracking-wider hover:bg-emerald-400 transition transform active:scale-95 shadow-lg shadow-arcade-neonGreen/30">
+                                Play Game
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-gray-800/80 flex items-center justify-between text-xs font-mono">
+                    <div class="text-gray-400">Score: <span id="soccer-score" class="text-white font-bold">0</span></div>
+                    <div class="text-gray-400"><i class="fa-solid fa-trophy text-arcade-neonYellow"></i> High: <span id="soccer-high" class="text-arcade-neonYellow font-bold">0</span></div>
+                </div>
+            </div>
+
+            <!-- Game 2: Basketball Hoops -->
+            <div class="game-card bg-arcade-card border border-gray-800/80 rounded-2xl p-4 flex flex-col justify-between card-hover relative overflow-hidden" data-name="basketball arcade hoops sports shoot rim dunk" data-category="sports">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-arcade-neonOrange animate-ping"></span>
+                            <h3 class="font-bold text-lg text-white">Basketball Hoops</h3>
+                        </div>
+                        <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-800 text-arcade-neonOrange border border-gray-700">Sports</span>
+                    </div>
+                    
+                    <div id="basketball-container" class="game-container relative bg-black rounded-xl overflow-hidden border border-gray-800 aspect-video flex items-center justify-center">
+                        <button onclick="toggleFullscreen('basketball-container')" class="absolute top-2 right-2 z-20 text-gray-400 hover:text-white bg-black/60 p-1.5 rounded-lg border border-gray-700/50 backdrop-blur-xs transition">
+                            <i class="fa-solid fa-expand text-xs"></i>
+                        </button>
+                        <canvas id="basketball-canvas" width="360" height="202" class="w-full h-full object-contain"></canvas>
+                        
+                        <div id="basketball-overlay" class="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center z-10">
+                            <i class="fa-solid fa-basketball text-4xl text-arcade-neonOrange mb-2 animate-bounce"></i>
+                            <h4 id="basketball-title" class="font-retro text-xs text-white mb-2">ARCADE HOOPS</h4>
+                            <p class="text-xs text-gray-400 mb-4">Drag & Release Ball to Shoot Parabola</p>
+                            <button onclick="startBasketball()" class="px-5 py-2.5 bg-arcade-neonOrange text-black font-bold text-xs rounded-xl uppercase tracking-wider hover:bg-orange-400 transition transform active:scale-95 shadow-lg shadow-arcade-neonOrange/30">
+                                Play Game
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-gray-800/80 flex items-center justify-between text-xs font-mono">
+                    <div class="text-gray-400">Score: <span id="basketball-score" class="text-white font-bold">0</span></div>
+                    <div class="text-gray-400"><i class="fa-solid fa-trophy text-arcade-neonYellow"></i> High: <span id="basketball-high" class="text-arcade-neonYellow font-bold">0</span></div>
+                </div>
+            </div>
+
+            <!-- Game 3: Tennis Rally -->
+            <div class="game-card bg-arcade-card border border-gray-800/80 rounded-2xl p-4 flex flex-col justify-between card-hover relative overflow-hidden" data-name="tennis rally court match ball racket sports" data-category="sports">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-arcade-neonYellow animate-ping"></span>
+                            <h3 class="font-bold text-lg text-white">Tennis Rally</h3>
+                        </div>
+                        <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-800 text-arcade-neonYellow border border-gray-700">Sports</span>
+                    </div>
+                    
+                    <div id="tennis-container" class="game-container relative bg-black rounded-xl overflow-hidden border border-gray-800 aspect-video flex items-center justify-center">
+                        <button onclick="toggleFullscreen('tennis-container')" class="absolute top-2 right-2 z-20 text-gray-400 hover:text-white bg-black/60 p-1.5 rounded-lg border border-gray-700/50 backdrop-blur-xs transition">
+                            <i class="fa-solid fa-expand text-xs"></i>
+                        </button>
+                        <canvas id="tennis-canvas" width="360" height="202" class="w-full h-full object-contain"></canvas>
+                        
+                        <div id="tennis-overlay" class="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center z-10">
+                            <i class="fa-solid fa-baseball-bat-ball text-4xl text-arcade-neonYellow mb-2 animate-bounce"></i>
+                            <h4 id="tennis-title" class="font-retro text-xs text-white mb-2">TENNIS RALLY</h4>
+                            <p class="text-xs text-gray-400 mb-4">Move Mouse/Touch horizontally to Return Shots</p>
+                            <button onclick="startTennis()" class="px-5 py-2.5 bg-arcade-neonYellow text-black font-bold text-xs rounded-xl uppercase tracking-wider hover:bg-yellow-400 transition transform active:scale-95 shadow-lg shadow-arcade-neonYellow/30">
+                                Play Game
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-gray-800/80 flex items-center justify-between text-xs font-mono">
+                    <div class="text-gray-400">Score: <span id="tennis-score" class="text-white font-bold">0</span></div>
+                    <div class="text-gray-400"><i class="fa-solid fa-trophy text-arcade-neonYellow"></i> High: <span id="tennis-high" class="text-arcade-neonYellow font-bold">0</span></div>
+                </div>
+            </div>
+
+            <!-- Game 4: Cricket Blitz -->
+            <div class="game-card bg-arcade-card border border-gray-800/80 rounded-2xl p-4 flex flex-col justify-between card-hover relative overflow-hidden" data-name="cricket blitz bat bowler runs wicket sports" data-category="sports">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-arcade-neonCyan animate-ping"></span>
+                            <h3 class="font-bold text-lg text-white">Cricket Blitz</h3>
+                        </div>
+                        <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-800 text-arcade-neonCyan border border-gray-700">Sports</span>
+                    </div>
+                    
+                    <div id="cricket-container" class="game-container relative bg-black rounded-xl overflow-hidden border border-gray-800 aspect-video flex items-center justify-center">
+                        <button onclick="toggleFullscreen('cricket-container')" class="absolute top-2 right-2 z-20 text-gray-400 hover:text-white bg-black/60 p-1.5 rounded-lg border border-gray-700/50 backdrop-blur-xs transition">
+                            <i class="fa-solid fa-expand text-xs"></i>
+                        </button>
+                        <canvas id="cricket-canvas" width="360" height="202" class="w-full h-full object-contain"></canvas>
+                        
+                        <div id="cricket-overlay" class="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center z-10">
+                            <i class="fa-solid fa-baseball text-4xl text-arcade-neonCyan mb-2 animate-bounce"></i>
+                            <h4 id="cricket-title" class="font-retro text-xs text-white mb-2">CRICKET BLITZ</h4>
+                            <p class="text-xs text-gray-400 mb-4">Click/Tap right as the Ball bounces to Swing!</p>
+                            <button onclick="startCricket()" class="px-5 py-2.5 bg-arcade-neonCyan text-black font-bold text-xs rounded-xl uppercase tracking-wider hover:bg-cyan-300 transition transform active:scale-95 shadow-lg shadow-arcade-neonCyan/30">
+                                Play Game
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-gray-800/80 flex items-center justify-between text-xs font-mono">
+                    <div class="text-gray-400">Runs: <span id="cricket-score" class="text-white font-bold">0</span></div>
+                    <div class="text-gray-400"><i class="fa-solid fa-trophy text-arcade-neonYellow"></i> High: <span id="cricket-high" class="text-arcade-neonYellow font-bold">0</span></div>
+                </div>
+            </div>
+
+            <!-- Game 5: Volleyball Beach Smash -->
+            <div class="game-card bg-arcade-card border border-gray-800/80 rounded-2xl p-4 flex flex-col justify-between card-hover relative overflow-hidden" data-name="volleyball beach smash spike net jump sports" data-category="sports">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-arcade-accent animate-ping"></span>
+                            <h3 class="font-bold text-lg text-white">Volleyball Smash</h3>
+                        </div>
+                        <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-800 text-arcade-accent border border-gray-700">Sports</span>
+                    </div>
+                    
+                    <div id="volleyball-container" class="game-container relative bg-black rounded-xl overflow-hidden border border-gray-800 aspect-video flex items-center justify-center">
+                        <button onclick="toggleFullscreen('volleyball-container')" class="absolute top-2 right-2 z-20 text-gray-400 hover:text-white bg-black/60 p-1.5 rounded-lg border border-gray-700/50 backdrop-blur-xs transition">
+                            <i class="fa-solid fa-expand text-xs"></i>
+                        </button>
+                        <canvas id="volleyball-canvas" width="360" height="202" class="w-full h-full object-contain"></canvas>
+                        
+                        <div id="volleyball-overlay" class="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center z-10">
+                            <i class="fa-solid fa-volleyball text-4xl text-arcade-accent mb-2 animate-bounce"></i>
+                            <h4 id="volleyball-title" class="font-retro text-xs text-white mb-2">BEACH VOLLEYBALL</h4>
+                            <p class="text-xs text-gray-400 mb-4">Click/Tap to Jump & Bump/Spike over Net</p>
+                            <button onclick="startVolleyball()" class="px-5 py-2.5 bg-arcade-accent text-white font-bold text-xs rounded-xl uppercase tracking-wider hover:bg-pink-600 transition transform active:scale-95 shadow-lg shadow-arcade-accent/30">
+                                Play Game
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-gray-800/80 flex items-center justify-between text-xs font-mono">
+                    <div class="text-gray-400">Score: <span id="volleyball-score" class="text-white font-bold">0</span></div>
+                    <div class="text-gray-400"><i class="fa-solid fa-trophy text-arcade-neonYellow"></i> High: <span id="volleyball-high" class="text-arcade-neonYellow font-bold">0</span></div>
+                </div>
+            </div>
+
+            <!-- NEW Game 6: Tetris Stack -->
+            <div class="game-card bg-arcade-card border border-gray-800/80 rounded-2xl p-4 flex flex-col justify-between card-hover relative overflow-hidden" data-name="tetris stack puzzle block classic tetromino" data-category="puzzle">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-arcade-neonCyan animate-ping"></span>
+                            <h3 class="font-bold text-lg text-white">Neon Tetris</h3>
+                        </div>
+                        <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-800 text-arcade-neonCyan border border-gray-700">Puzzle</span>
+                    </div>
+                    
+                    <div id="tetris-container" class="game-container relative bg-black rounded-xl overflow-hidden border border-gray-800 aspect-video flex items-center justify-center">
+                        <button onclick="toggleFullscreen('tetris-container')" class="absolute top-2 right-2 z-20 text-gray-400 hover:text-white bg-black/60 p-1.5 rounded-lg border border-gray-700/50 backdrop-blur-xs transition">
+                            <i class="fa-solid fa-expand text-xs"></i>
+                        </button>
+                        <canvas id="tetris-canvas" width="360" height="202" class="w-full h-full object-contain"></canvas>
+                        
+                        <div id="tetris-overlay" class="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center z-10">
+                            <i class="fa-solid fa-shapes text-4xl text-arcade-neonCyan mb-2"></i>
+                            <h4 id="tetris-title" class="font-retro text-xs text-white mb-2">NEON TETRIS</h4>
+                            <p class="text-xs text-gray-400 mb-4">Arrows: Left/Right move, Up Rotate, Down Drop</p>
+                            <button onclick="startTetris()" class="px-5 py-2.5 bg-arcade-neonCyan text-black font-bold text-xs rounded-xl uppercase tracking-wider hover:bg-cyan-300 transition transform active:scale-95 shadow-lg shadow-arcade-neonCyan/30">
+                                Play Game
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-gray-800/80 flex items-center justify-between text-xs font-mono">
+                    <div class="text-gray-400">Score: <span id="tetris-score" class="text-white font-bold">0</span></div>
+                    <div class="text-gray-400"><i class="fa-solid fa-trophy text-arcade-neonYellow"></i> High: <span id="tetris-high" class="text-arcade-neonYellow font-bold">0</span></div>
+                </div>
+            </div>
+
+            <!-- NEW Game 7: Flappy Bird -->
+            <div class="game-card bg-arcade-card border border-gray-800/80 rounded-2xl p-4 flex flex-col justify-between card-hover relative overflow-hidden" data-name="flappy bird arcade wings fly obstacle pipes" data-category="action">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-arcade-neonYellow animate-ping"></span>
+                            <h3 class="font-bold text-lg text-white">Flappy Cyber</h3>
+                        </div>
+                        <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-800 text-arcade-neonYellow border border-gray-700">Action</span>
+                    </div>
+                    
+                    <div id="flappy-container" class="game-container relative bg-black rounded-xl overflow-hidden border border-gray-800 aspect-video flex items-center justify-center">
+                        <button onclick="toggleFullscreen('flappy-container')" class="absolute top-2 right-2 z-20 text-gray-400 hover:text-white bg-black/60 p-1.5 rounded-lg border border-gray-700/50 backdrop-blur-xs transition">
+                            <i class="fa-solid fa-expand text-xs"></i>
+                        </button>
+                        <canvas id="flappy-canvas" width="360" height="202" class="w-full h-full object-contain"></canvas>
+                        
+                        <div id="flappy-overlay" class="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center z-10">
+                            <i class="fa-solid fa-crow text-4xl text-arcade-neonYellow mb-2 animate-bounce"></i>
+                            <h4 id="flappy-title" class="font-retro text-xs text-white mb-2">FLAPPY CYBER</h4>
+                            <p class="text-xs text-gray-400 mb-4">Click / Spacebar / Tap to Flap & Pass Pipes</p>
+                            <button onclick="startFlappy()" class="px-5 py-2.5 bg-arcade-neonYellow text-black font-bold text-xs rounded-xl uppercase tracking-wider hover:bg-yellow-300 transition transform active:scale-95 shadow-lg shadow-arcade-neonYellow/30">
+                                Play Game
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-gray-800/80 flex items-center justify-between text-xs font-mono">
+                    <div class="text-gray-400">Score: <span id="flappy-score" class="text-white font-bold">0</span></div>
+                    <div class="text-gray-400"><i class="fa-solid fa-trophy text-arcade-neonYellow"></i> High: <span id="flappy-high" class="text-arcade-neonYellow font-bold">0</span></div>
+                </div>
+            </div>
+
+            <!-- NEW Game 8: Space Invaders -->
+            <div class="game-card bg-arcade-card border border-gray-800/80 rounded-2xl p-4 flex flex-col justify-between card-hover relative overflow-hidden" data-name="space invaders alien shoot arcade galaxy laser defense" data-category="arcade">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-arcade-neonGreen animate-ping"></span>
+                            <h3 class="font-bold text-lg text-white">Space Invaders</h3>
+                        </div>
+                        <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-800 text-arcade-neonGreen border border-gray-700">Arcade</span>
+                    </div>
+                    
+                    <div id="space-container" class="game-container relative bg-black rounded-xl overflow-hidden border border-gray-800 aspect-video flex items-center justify-center">
+                        <button onclick="toggleFullscreen('space-container')" class="absolute top-2 right-2 z-20 text-gray-400 hover:text-white bg-black/60 p-1.5 rounded-lg border border-gray-700/50 backdrop-blur-xs transition">
+                            <i class="fa-solid fa-expand text-xs"></i>
+                        </button>
+                        <canvas id="space-canvas" width="360" height="202" class="w-full h-full object-contain"></canvas>
+                        
+                        <div id="space-overlay" class="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center z-10">
+                            <i class="fa-solid fa-spaghetti-monster-flying text-4xl text-arcade-neonGreen mb-2"></i>
+                            <h4 id="space-title" class="font-retro text-xs text-white mb-2">SPACE DEFENDER</h4>
+                            <p class="text-xs text-gray-400 mb-4">Mouse/Arrows to Move, Click/Space to Shoot</p>
+                            <button onclick="startSpace()" class="px-5 py-2.5 bg-arcade-neonGreen text-black font-bold text-xs rounded-xl uppercase tracking-wider hover:bg-emerald-400 transition transform active:scale-95 shadow-lg shadow-arcade-neonGreen/30">
+                                Play Game
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-gray-800/80 flex items-center justify-between text-xs font-mono">
+                    <div class="text-gray-400">Score: <span id="space-score" class="text-white font-bold">0</span></div>
+                    <div class="text-gray-400"><i class="fa-solid fa-trophy text-arcade-neonYellow"></i> High: <span id="space-high" class="text-arcade-neonYellow font-bold">0</span></div>
+                </div>
+            </div>
+
+            <!-- Game 9: Snake -->
+            <div class="game-card bg-arcade-card border border-gray-800/80 rounded-2xl p-4 flex flex-col justify-between card-hover relative overflow-hidden" data-name="snake retro classic neon particles arcade" data-category="arcade">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-arcade-neonGreen animate-ping"></span>
+                            <h3 class="font-bold text-lg text-white">Retro Snake</h3>
+                        </div>
+                        <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-800 text-arcade-neonGreen border border-gray-700">Arcade</span>
+                    </div>
+                    
+                    <div id="snake-container" class="game-container relative bg-black rounded-xl overflow-hidden border border-gray-800 aspect-video flex items-center justify-center">
+                        <button onclick="toggleFullscreen('snake-container')" class="absolute top-2 right-2 z-20 text-gray-400 hover:text-white bg-black/60 p-1.5 rounded-lg border border-gray-700/50 backdrop-blur-xs transition">
+                            <i class="fa-solid fa-expand text-xs"></i>
+                        </button>
+                        <canvas id="snake-canvas" width="360" height="202" class="w-full h-full object-contain"></canvas>
+                        
+                        <div id="snake-overlay" class="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center z-10">
+                            <i class="fa-solid fa-worm text-4xl text-arcade-neonGreen mb-2"></i>
+                            <h4 id="snake-title" class="font-retro text-xs text-white mb-2">NEON SNAKE</h4>
+                            <p class="text-xs text-gray-400 mb-4">Use Arrow Keys or WASD to Move</p>
+                            <button onclick="startSnake()" class="px-5 py-2.5 bg-arcade-neonGreen text-black font-bold text-xs rounded-xl uppercase tracking-wider hover:bg-emerald-400 transition transform active:scale-95 shadow-lg shadow-arcade-neonGreen/30">
+                                Play Game
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-gray-800/80 flex items-center justify-between text-xs font-mono">
+                    <div class="text-gray-400">Score: <span id="snake-score" class="text-white font-bold">0</span></div>
+                    <div class="text-gray-400"><i class="fa-solid fa-trophy text-arcade-neonYellow"></i> High: <span id="snake-high" class="text-arcade-neonYellow font-bold">0</span></div>
+                </div>
+            </div>
+
+            <!-- Game 10: Pong -->
+            <div class="game-card bg-arcade-card border border-gray-800/80 rounded-2xl p-4 flex flex-col justify-between card-hover relative overflow-hidden" data-name="pong cyber action paddle ai trail" data-category="action">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-arcade-neonCyan animate-ping"></span>
+                            <h3 class="font-bold text-lg text-white">Cyber Pong</h3>
+                        </div>
+                        <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-800 text-arcade-neonCyan border border-gray-700">Action</span>
+                    </div>
+                    
+                    <div id="pong-container" class="game-container relative bg-black rounded-xl overflow-hidden border border-gray-800 aspect-video flex items-center justify-center">
+                        <button onclick="toggleFullscreen('pong-container')" class="absolute top-2 right-2 z-20 text-gray-400 hover:text-white bg-black/60 p-1.5 rounded-lg border border-gray-700/50 backdrop-blur-xs transition">
+                            <i class="fa-solid fa-expand text-xs"></i>
+                        </button>
+                        <canvas id="pong-canvas" width="360" height="202" class="w-full h-full object-contain"></canvas>
+                        
+                        <div id="pong-overlay" class="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center z-10">
+                            <i class="fa-solid fa-table-tennis-paddle-ball text-4xl text-arcade-neonCyan mb-2"></i>
+                            <h4 id="pong-title" class="font-retro text-xs text-white mb-2">CYBER PONG</h4>
+                            <p class="text-xs text-gray-400 mb-4">Move Mouse or Drag Touch to Control Paddle</p>
+                            <button onclick="startPong()" class="px-5 py-2.5 bg-arcade-neonCyan text-black font-bold text-xs rounded-xl uppercase tracking-wider hover:bg-cyan-300 transition transform active:scale-95 shadow-lg shadow-arcade-neonCyan/30">
+                                Play Game
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-gray-800/80 flex items-center justify-between text-xs font-mono">
+                    <div class="text-gray-400">Score: <span id="pong-score" class="text-white font-bold">0</span></div>
+                    <div class="text-gray-400"><i class="fa-solid fa-trophy text-arcade-neonYellow"></i> High: <span id="pong-high" class="text-arcade-neonYellow font-bold">0</span></div>
+                </div>
+            </div>
+
+            <!-- Game 11: Brick Breaker -->
+            <div class="game-card bg-arcade-card border border-gray-800/80 rounded-2xl p-4 flex flex-col justify-between card-hover relative overflow-hidden" data-name="brick breaker breakout arcade particles" data-category="arcade">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-arcade-accent animate-ping"></span>
+                            <h3 class="font-bold text-lg text-white">Brick Breaker</h3>
+                        </div>
+                        <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-800 text-arcade-accent border border-gray-700">Arcade</span>
+                    </div>
+                    
+                    <div id="brick-container" class="game-container relative bg-black rounded-xl overflow-hidden border border-gray-800 aspect-video flex items-center justify-center">
+                        <button onclick="toggleFullscreen('brick-container')" class="absolute top-2 right-2 z-20 text-gray-400 hover:text-white bg-black/60 p-1.5 rounded-lg border border-gray-700/50 backdrop-blur-xs transition">
+                            <i class="fa-solid fa-expand text-xs"></i>
+                        </button>
+                        <canvas id="brick-canvas" width="360" height="202" class="w-full h-full object-contain"></canvas>
+                        
+                        <div id="brick-overlay" class="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center z-10">
+                            <i class="fa-solid fa-cubes text-4xl text-arcade-accent mb-2"></i>
+                            <h4 id="brick-title" class="font-retro text-xs text-white mb-2">NEON BREAKOUT</h4>
+                            <p class="text-xs text-gray-400 mb-4">Use Mouse or Touch Drag to Move Paddle</p>
+                            <button onclick="startBrick()" class="px-5 py-2.5 bg-arcade-accent text-white font-bold text-xs rounded-xl uppercase tracking-wider hover:bg-pink-600 transition transform active:scale-95 shadow-lg shadow-arcade-accent/30">
+                                Play Game
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-gray-800/80 flex items-center justify-between text-xs font-mono">
+                    <div class="text-gray-400">Score: <span id="brick-score" class="text-white font-bold">0</span></div>
+                    <div class="text-gray-400"><i class="fa-solid fa-trophy text-arcade-neonYellow"></i> High: <span id="brick-high" class="text-arcade-neonYellow font-bold">0</span></div>
+                </div>
+            </div>
+
+            <!-- Game 12: Memory Match -->
+            <div class="game-card bg-arcade-card border border-gray-800/80 rounded-2xl p-4 flex flex-col justify-between card-hover relative overflow-hidden" data-name="memory card game match brain puzzle" data-category="puzzle">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-arcade-neonYellow animate-ping"></span>
+                            <h3 class="font-bold text-lg text-white">Memory Match</h3>
+                        </div>
+                        <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-800 text-arcade-neonYellow border border-gray-700">Puzzle</span>
+                    </div>
+                    
+                    <div id="memory-container" class="game-container relative bg-black rounded-xl overflow-hidden border border-gray-800 aspect-video flex items-center justify-center p-2">
+                        <button onclick="toggleFullscreen('memory-container')" class="absolute top-2 right-2 z-20 text-gray-400 hover:text-white bg-black/60 p-1.5 rounded-lg border border-gray-700/50 backdrop-blur-xs transition">
+                            <i class="fa-solid fa-expand text-xs"></i>
+                        </button>
+                        <div id="memory-grid" class="w-full h-full grid grid-cols-4 gap-2 p-1"></div>
+                        
+                        <div id="memory-overlay" class="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center z-10">
+                            <i class="fa-solid fa-brain text-4xl text-arcade-neonYellow mb-2"></i>
+                            <h4 id="memory-title" class="font-retro text-xs text-white mb-2">CYBER MEMORY</h4>
+                            <p class="text-xs text-gray-400 mb-4">Find all pairs with fewest moves</p>
+                            <button onclick="startMemory()" class="px-5 py-2.5 bg-arcade-neonYellow text-black font-bold text-xs rounded-xl uppercase tracking-wider hover:bg-yellow-400 transition transform active:scale-95 shadow-lg shadow-arcade-neonYellow/30">
+                                Play Game
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-gray-800/80 flex items-center justify-between text-xs font-mono">
+                    <div class="text-gray-400">Moves: <span id="memory-score" class="text-white font-bold">0</span></div>
+                    <div class="text-gray-400"><i class="fa-solid fa-trophy text-arcade-neonYellow"></i> Best Moves: <span id="memory-high" class="text-arcade-neonYellow font-bold">--</span></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-arcade-card border border-gray-700 rounded-2xl max-w-lg w-full p-6 relative shadow-2xl">
+            <button onclick="closeHelpModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex items-center gap-3 mb-4">
+                <div class="p-3 bg-arcade-neonPurple/20 text-arcade-neonCyan rounded-xl border border-arcade-neonPurple/40">
+                    <i class="fa-brands fa-github text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white">Host Free on GitHub Pages</h3>
+                    <p class="text-xs text-gray-400">Publish this arcade in 5 simple steps</p>
+                </div>
+            </div>
+            
+            <div class="space-y-3 text-xs text-gray-300 font-mono bg-black/50 p-4 rounded-xl border border-gray-800">
+                <p><span class="text-arcade-neonCyan font-bold">1.</span> Create a public GitHub repo named <code class="bg-gray-800 px-1.5 py-0.5 rounded text-arcade-neonGreen">Arcade-game-</code>.</p>
+                <p><span class="text-arcade-neonCyan font-bold">2.</span> Save this entire file as <code class="bg-gray-800 px-1.5 py-0.5 rounded text-arcade-neonYellow">index.html</code>.</p>
+                <p><span class="text-arcade-neonCyan font-bold">3.</span> Upload <code class="text-white">index.html</code> directly into your repository root.</p>
+                <p><span class="text-arcade-neonCyan font-bold">4.</span> Go to <strong class="text-white">Settings > Pages</strong>, select <strong class="text-white">main</strong> branch and click Save.</p>
+                <p><span class="text-arcade-neonCyan font-bold">5.</span> Visit your live web arcade at: <code class="text-arcade-neonGreen break-all">https://username.github.io/Arcade-game-/</code></p>
+            </div>
+
+            <div class="mt-5 flex justify-end">
+                <button onclick="closeHelpModal()" class="px-5 py-2 bg-arcade-neonCyan text-black font-semibold rounded-xl text-xs hover:bg-cyan-300 transition">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="border-t border-gray-800/80 bg-arcade-bg py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-gray-500 font-mono">
+            <p>12-in-1 Web Application • Pure HTML5 Canvas & Web Audio Synthesizer • Fullscreen Ready</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        let audioCtx = null;
+        let soundEnabled = true;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioCtx;
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                const ctx = getAudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                const now = ctx.currentTime;
+
+                if (type === 'kick' || type === 'hit') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(140, now);
+                    osc.frequency.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now); osc.stop(now + 0.2);
+                } else if (type === 'swish' || type === 'racket') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(500, now);
+                    osc.frequency.exponentialRampToValueAtTime(150, now + 0.12);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                    osc.start(now); osc.stop(now + 0.12);
+                } else if (type === 'score' || type === 'boundary') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.08);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now); osc.stop(now + 0.25);
+                } else if (type === 'fail' || type === 'wicket') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.linearRampToValueAtTime(70, now + 0.35);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                    osc.start(now); osc.stop(now + 0.35);
+                } else if (type === 'bounce' || type === 'flap') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(280, now);
+                    osc.frequency.exponentialRampToValueAtTime(120, now + 0.08);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now); osc.stop(now + 0.08);
+                } else if (type === 'laser') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(800, now);
+                    osc.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                    osc.start(now); osc.stop(now + 0.15);
+                } else if (type === 'rotate') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(450, now + 0.05);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                    osc.start(now); osc.stop(now + 0.05);
+                }
+            } catch(e) {}
+        }
+
+        function toggleAudio() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('sound-text').textContent = `AUDIO: ${soundEnabled ? 'ON' : 'OFF'}`;
+            document.getElementById('sound-icon').className = soundEnabled ? 'fa-solid fa-volume-high text-arcade-neonCyan' : 'fa-solid fa-volume-xmark text-gray-500';
+        }
+
+        function toggleFullscreen(elementId) {
+            const elem = document.getElementById(elementId);
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                if (elem.requestFullscreen) { elem.requestFullscreen(); }
+                else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(); }
+            } else {
+                if (document.exitFullscreen) { document.exitFullscreen(); }
+                else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
+            }
+        }
+
+        const scores = {
+            soccer: localStorage.getItem('arcade_soccer_high') || 0,
+            basketball: localStorage.getItem('arcade_basketball_high') || 0,
+            tennis: localStorage.getItem('arcade_tennis_high') || 0,
+            cricket: localStorage.getItem('arcade_cricket_high') || 0,
+            volleyball: localStorage.getItem('arcade_volleyball_high') || 0,
+            tetris: localStorage.getItem('arcade_tetris_high') || 0,
+            flappy: localStorage.getItem('arcade_flappy_high') || 0,
+            space: localStorage.getItem('arcade_space_high') || 0,
+            snake: localStorage.getItem('arcade_snake_high') || 0,
+            pong: localStorage.getItem('arcade_pong_high') || 0,
+            brick: localStorage.getItem('arcade_brick_high') || 0,
+            memory: localStorage.getItem('arcade_memory_high') || null
+        };
+
+        function updateHighScoreDisplay() {
+            document.getElementById('soccer-high').textContent = scores.soccer;
+            document.getElementById('basketball-high').textContent = scores.basketball;
+            document.getElementById('tennis-high').textContent = scores.tennis;
+            document.getElementById('cricket-high').textContent = scores.cricket;
+            document.getElementById('volleyball-high').textContent = scores.volleyball;
+            document.getElementById('tetris-high').textContent = scores.tetris;
+            document.getElementById('flappy-high').textContent = scores.flappy;
+            document.getElementById('space-high').textContent = scores.space;
+            document.getElementById('snake-high').textContent = scores.snake;
+            document.getElementById('pong-high').textContent = scores.pong;
+            document.getElementById('brick-high').textContent = scores.brick;
+            document.getElementById('memory-high').textContent = scores.memory ? scores.memory : '--';
+        }
+        updateHighScoreDisplay();
+
+        function filterGames() {
+            const query = document.getElementById('game-search').value.toLowerCase();
+            document.querySelectorAll('.game-card').forEach(card => {
+                const name = card.getAttribute('data-name');
+                card.style.display = name.includes(query) ? 'flex' : 'none';
+            });
+        }
+
+        function setCategory(category) {
+            document.querySelectorAll('.category-btn').forEach(tab => {
+                if (tab.getAttribute('data-category') === category) {
+                    tab.className = 'category-btn active px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider bg-arcade-neonCyan text-black transition shadow-lg shadow-arcade-neonCyan/20';
+                } else {
+                    tab.className = 'category-btn px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider bg-arcade-card border border-gray-800 text-gray-400 hover:text-white transition';
+                }
+            });
+
+            document.querySelectorAll('.game-card').forEach(card => {
+                const cardCat = card.getAttribute('data-category');
+                card.style.display = (category === 'all' || cardCat === category) ? 'flex' : 'none';
+            });
+        }
+
+        function resetFilters() {
+            document.getElementById('game-search').value = '';
+            setCategory('all');
+        }
+
+        function openHelpModal() { document.getElementById('help-modal').classList.remove('hidden'); }
+        function closeHelpModal() { document.getElementById('help-modal').classList.add('hidden'); }
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x; this.y = y; this.color = color;
+                this.radius = Math.random() * 3 + 1;
+                this.vx = (Math.random() - 0.5) * 6;
+                this.vy = (Math.random() - 0.5) * 6;
+                this.alpha = 1;
+                this.decay = Math.random() * 0.03 + 0.015;
+            }
+            update() { this.x += this.vx; this.y += this.vy; this.alpha -= this.decay; }
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        /* -------------------------------------------------------------
+           GAME 1: SOCCER PENALTIES
+        ------------------------------------------------------------- */
+        let soccerAnim = null;
+        function startSoccer() {
+            const canvas = document.getElementById('soccer-canvas');
+            const ctx = canvas.getContext('2d');
+            document.getElementById('soccer-overlay').classList.add('hidden');
+
+            let score = 0, streak = 0;
+            let ball = { x: 180, y: 175, vx: 0, vy: 0, radius: 8, isKicked: false };
+            let goalie = { x: 180, y: 52, width: 34, height: 12, vx: 2 };
+            let aimX = 180, aimY = 50, particles = [];
+            let goalNotice = "", noticeTimer = 0;
+            const goalNet = { x: 90, y: 25, width: 180, height: 45 };
+
+            function updateAim(e) {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                aimX = (clientX - rect.left) * (canvas.width / rect.width);
+                aimY = (clientY - rect.top) * (canvas.height / rect.height);
+            }
+
+            function shootBall() {
+                if (ball.isKicked) return;
+                ball.isKicked = true;
+                const dx = aimX - ball.x;
+                const dy = aimY - ball.y;
+                const dist = Math.hypot(dx, dy);
+                ball.vx = (dx / dist) * 7.5;
+                ball.vy = (dy / dist) * 7.5;
+                playSound('kick');
+            }
+
+            canvas.onmousemove = canvas.ontouchmove = updateAim;
+            canvas.onclick = shootBall;
+
+            function resetBall() {
+                ball.x = 180; ball.y = 175; ball.vx = 0; ball.vy = 0; ball.isKicked = false;
+            }
+
+            function gameLoop() {
+                ctx.fillStyle = '#114422'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.strokeRect(goalNet.x, goalNet.y, goalNet.width, goalNet.height);
+
+                goalie.x += goalie.vx;
+                if (goalie.x - goalie.width/2 <= goalNet.x || goalie.x + goalie.width/2 >= goalNet.x + goalNet.width) goalie.vx = -goalie.vx;
+
+                ctx.fillStyle = '#ffea00'; ctx.fillRect(goalie.x - goalie.width/2, goalie.y, goalie.width, goalie.height);
+
+                if (!ball.isKicked) {
+                    ctx.strokeStyle = '#00f0ff'; ctx.beginPath(); ctx.moveTo(ball.x, ball.y); ctx.lineTo(aimX, aimY); ctx.stroke();
+                } else {
+                    ball.x += ball.vx; ball.y += ball.vy;
+                    ball.radius = Math.max(4, 8 * (ball.y / 175));
+
+                    if (ball.y <= goalie.y + goalie.height && ball.y >= goalie.y && ball.x >= goalie.x - goalie.width/2 && ball.x <= goalie.x + goalie.width/2) {
+                        playSound('fail'); streak = 0; goalNotice = "SAVED!"; noticeTimer = 40; resetBall();
+                    } else if (ball.y <= goalNet.y + goalNet.height && ball.x >= goalNet.x && ball.x <= goalNet.x + goalNet.width) {
+                        playSound('score'); streak++; score += 10 * streak;
+                        document.getElementById('soccer-score').textContent = score;
+                        goalNotice = "GOAL!"; noticeTimer = 40;
+                        for(let i=0; i<25; i++) particles.push(new Particle(ball.x, ball.y, '#00ff66'));
+                        resetBall();
+                    } else if (ball.y < goalNet.y - 10) { playSound('fail'); streak = 0; goalNotice = "MISSED!"; noticeTimer = 40; resetBall(); }
+                }
+
+                particles.forEach((p, idx) => { p.update(); p.draw(ctx); if (p.alpha <= 0) particles.splice(idx, 1); });
+
+                ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2); ctx.fill();
+
+                if (noticeTimer > 0) {
+                    noticeTimer--; ctx.fillStyle = goalNotice.includes("GOAL") ? '#00ff66' : '#ff0055';
+                    ctx.font = 'bold 14px "Press Start 2P"'; ctx.textAlign = 'center'; ctx.fillText(goalNotice, canvas.width / 2, 110);
+                }
+
+                if (score > scores.soccer) { scores.soccer = score; localStorage.setItem('arcade_soccer_high', score); updateHighScoreDisplay(); }
+                soccerAnim = requestAnimationFrame(gameLoop);
+            }
+            if (soccerAnim) cancelAnimationFrame(soccerAnim);
+            soccerAnim = requestAnimationFrame(gameLoop);
+        }
+
+        /* -------------------------------------------------------------
+           GAME 2: BASKETBALL HOOPS
+        ------------------------------------------------------------- */
+        let basketballAnim = null;
+        function startBasketball() {
+            const canvas = document.getElementById('basketball-canvas');
+            const ctx = canvas.getContext('2d');
+            document.getElementById('basketball-overlay').classList.add('hidden');
+
+            let score = 0;
+            let ball = { x: 60, y: 150, vx: 0, vy: 0, radius: 10, isShot: false };
+            let rim = { x: 280, y: 70, radius: 16, vx: 1.5 };
+            let isDragging = false, dragStart = { x: 0, y: 0 }, particles = [];
+            let notice = "", noticeTimer = 0;
+
+            function getPos(e) {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return { x: (clientX - rect.left) * (canvas.width / rect.width), y: (clientY - rect.top) * (canvas.height / rect.height) };
+            }
+
+            canvas.onmousedown = canvas.ontouchstart = (e) => { if (!ball.isShot) { isDragging = true; dragStart = getPos(e); } };
+            canvas.onmouseup = canvas.ontouchend = (e) => {
+                if (!isDragging || ball.isShot) return;
+                isDragging = false; ball.isShot = true;
+                const pos = getPos(e);
+                ball.vx = (dragStart.x - pos.x) * 0.25 + 7;
+                ball.vy = (dragStart.y - pos.y) * 0.25 - 6;
+                playSound('swish');
+            };
+
+            function resetBall() { ball.x = 60; ball.y = 150; ball.vx = 0; ball.vy = 0; ball.isShot = false; }
+
+            function gameLoop() {
+                ctx.fillStyle = '#140c1d'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#b86518'; ctx.fillRect(0, 175, canvas.width, 27);
+
+                rim.y += rim.vx; if (rim.y < 45 || rim.y > 95) rim.vx = -rim.vx;
+                ctx.strokeStyle = '#ff6600'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(rim.x - rim.radius, rim.y); ctx.lineTo(rim.x + rim.radius, rim.y); ctx.stroke();
+
+                if (ball.isShot) {
+                    ball.x += ball.vx; ball.y += ball.vy; ball.vy += 0.35;
+                    if (Math.hypot(ball.x - rim.x, ball.y - rim.y) < rim.radius && ball.vy > 0) {
+                        playSound('score'); score += 2; document.getElementById('basketball-score').textContent = score;
+                        notice = "SWISH! +2"; noticeTimer = 30;
+                        for(let i=0; i<20; i++) particles.push(new Particle(ball.x, ball.y, '#ff6600'));
+                        resetBall();
+                    } else if (ball.y > 165 || ball.x > canvas.width) { playSound('bounce'); resetBall(); }
+                }
+
+                particles.forEach((p, idx) => { p.update(); p.draw(ctx); if (p.alpha <= 0) particles.splice(idx, 1); });
+
+                ctx.fillStyle = '#ff6600'; ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2); ctx.fill();
+
+                if (noticeTimer > 0) {
+                    noticeTimer--; ctx.fillStyle = '#ffea00'; ctx.font = 'bold 12px "Press Start 2P"'; ctx.textAlign = 'center'; ctx.fillText(notice, canvas.width / 2, 40);
+                }
+
+                if (score > scores.basketball) { scores.basketball = score; localStorage.setItem('arcade_basketball_high', score); updateHighScoreDisplay(); }
+                basketballAnim = requestAnimationFrame(gameLoop);
+            }
+            if (basketballAnim) cancelAnimationFrame(basketballAnim);
+            basketballAnim = requestAnimationFrame(gameLoop);
+        }
+
+        /* -------------------------------------------------------------
+           GAME 3: TENNIS RALLY
+        ------------------------------------------------------------- */
+        let tennisAnim = null;
+        function startTennis() {
+            const canvas = document.getElementById('tennis-canvas');
+            const ctx = canvas.getContext('2d');
+            document.getElementById('tennis-overlay').classList.add('hidden');
+
+            let score = 0;
+            let playerX = 180;
+            let aiX = 180;
+            let ball = { x: 180, y: 100, vx: 2, vy: 3, radius: 5 };
+            let particles = [];
+
+            function updatePaddle(e) {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                playerX = (clientX - rect.left) * (canvas.width / rect.width);
+            }
+
+            canvas.onmousemove = canvas.ontouchmove = updatePaddle;
+
+            function resetBall() {
+                ball.x = 180; ball.y = 100; ball.vx = (Math.random() - 0.5) * 4; ball.vy = 3;
+            }
+
+            function gameLoop() {
+                ctx.fillStyle = '#1b4d3e'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 2;
+                ctx.strokeRect(40, 20, 280, 162);
+                ctx.beginPath(); ctx.moveTo(40, 101); ctx.lineTo(320, 101); ctx.stroke();
+
+                if (aiX < ball.x - 10) aiX += 2.2;
+                else if (aiX > ball.x + 10) aiX -= 2.2;
+
+                ball.x += ball.vx; ball.y += ball.vy;
+
+                if (ball.x < 40 || ball.x > 320) { ball.vx = -ball.vx; playSound('bounce'); }
+
+                if (ball.y <= 25 && ball.x >= aiX - 25 && ball.x <= aiX + 25) {
+                    ball.vy = -ball.vy * 1.05;
+                    playSound('racket');
+                }
+
+                if (ball.y >= 175 && ball.x >= playerX - 30 && ball.x <= playerX + 30) {
+                    ball.vy = -ball.vy * 1.05;
+                    ball.vx += (ball.x - playerX) * 0.15;
+                    score++;
+                    document.getElementById('tennis-score').textContent = score;
+                    playSound('racket');
+                    for(let i=0; i<10; i++) particles.push(new Particle(ball.x, ball.y, '#ffea00'));
+                }
+
+                if (ball.y > 200 || ball.y < 0) {
+                    playSound('fail');
+                    score = 0;
+                    document.getElementById('tennis-score').textContent = score;
+                    resetBall();
+                }
+
+                particles.forEach((p, idx) => { p.update(); p.draw(ctx); if (p.alpha <= 0) particles.splice(idx, 1); });
+
+                ctx.fillStyle = '#ff0055'; ctx.fillRect(aiX - 20, 20, 40, 6);
+                ctx.fillStyle = '#00f0ff'; ctx.fillRect(playerX - 25, 176, 50, 6);
+
+                ctx.fillStyle = '#ccff00'; ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2); ctx.fill();
+
+                if (score > scores.tennis) { scores.tennis = score; localStorage.setItem('arcade_tennis_high', score); updateHighScoreDisplay(); }
+                tennisAnim = requestAnimationFrame(gameLoop);
+            }
+            if (tennisAnim) cancelAnimationFrame(tennisAnim);
+            tennisAnim = requestAnimationFrame(gameLoop);
+        }
+
+        /* -------------------------------------------------------------
+           GAME 4: CRICKET BLITZ
+        ------------------------------------------------------------- */
+        let cricketAnim = null;
+        function startCricket() {
+            const canvas = document.getElementById('cricket-canvas');
+            const ctx = canvas.getContext('2d');
+            document.getElementById('cricket-overlay').classList.add('hidden');
+
+            let runs = 0;
+            let ball = { x: 180, y: 30, vy: 3, isPitched: false, active: true };
+            let batAngle = 0;
+            let notice = "", noticeTimer = 0;
+            let particles = [];
+
+            function swingBat() {
+                if (!ball.active) return;
+                batAngle = -Math.PI / 3;
+
+                if (ball.y >= 145 && ball.y <= 175) {
+                    playSound('hit');
+                    let scoreAdd = 4;
+                    if (ball.y >= 155 && ball.y <= 165) scoreAdd = 6;
+                    runs += scoreAdd;
+                    document.getElementById('cricket-score').textContent = runs;
+                    notice = `${scoreAdd} RUNS!`; noticeTimer = 35;
+                    for(let i=0; i<20; i++) particles.push(new Particle(180, 160, '#00f0ff'));
+                    ball.active = false;
+                    setTimeout(resetPitch, 1000);
+                } else if (ball.y > 175) {
+                    playSound('wicket');
+                    notice = "WICKET! OUT"; noticeTimer = 35;
+                    ball.active = false;
+                    setTimeout(resetPitch, 1200);
+                }
+            }
+
+            canvas.onclick = swingBat;
+
+            function resetPitch() {
+                ball.x = 180; ball.y = 30; ball.vy = 2.5 + Math.random() * 2; ball.active = true;
+            }
+
+            function gameLoop() {
+                ctx.fillStyle = '#1c3a1e'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#c2a649'; ctx.fillRect(140, 20, 80, 162);
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(172, 170, 16, 12);
+
+                if (ball.active) {
+                    ball.y += ball.vy;
+                    if (ball.y > 185) {
+                        playSound('wicket'); notice = "WICKET!"; noticeTimer = 35;
+                        ball.active = false; setTimeout(resetPitch, 1200);
+                    }
+                }
+
+                particles.forEach((p, idx) => { p.update(); p.draw(ctx); if (p.alpha <= 0) particles.splice(idx, 1); });
+
+                if (ball.active) {
+                    ctx.fillStyle = '#ff0055'; ctx.beginPath(); ctx.arc(ball.x, ball.y, 6, 0, Math.PI * 2); ctx.fill();
+                }
+
+                ctx.save();
+                ctx.translate(180, 165);
+                ctx.rotate(batAngle);
+                ctx.fillStyle = '#8b5a2b'; ctx.fillRect(-3, -25, 6, 25);
+                ctx.restore();
+
+                if (batAngle < 0) batAngle += 0.1;
+
+                if (noticeTimer > 0) {
+                    noticeTimer--; ctx.fillStyle = notice.includes("RUNS") ? '#ffea00' : '#ff0055';
+                    ctx.font = 'bold 12px "Press Start 2P"'; ctx.textAlign = 'center'; ctx.fillText(notice, canvas.width / 2, 80);
+                }
+
+                if (runs > scores.cricket) { scores.cricket = runs; localStorage.setItem('arcade_cricket_high', runs); updateHighScoreDisplay(); }
+                cricketAnim = requestAnimationFrame(gameLoop);
+            }
+            if (cricketAnim) cancelAnimationFrame(cricketAnim);
+            cricketAnim = requestAnimationFrame(gameLoop);
+        }
+
+        /* -------------------------------------------------------------
+           GAME 5: VOLLEYBALL BEACH SMASH
+        ------------------------------------------------------------- */
+        let volleyballAnim = null;
+        function startVolleyball() {
+            const canvas = document.getElementById('volleyball-canvas');
+            const ctx = canvas.getContext('2d');
+            document.getElementById('volleyball-overlay').classList.add('hidden');
+
+            let score = 0;
+            let player = { x: 70, y: 150, vy: 0, isJumping: false };
+            let ai = { x: 290, y: 150, vy: 0 };
+            let ball = { x: 70, y: 90, vx: 2, vy: -1 };
+            let particles = [];
+
+            function jump() {
+                if (!player.isJumping) {
+                    player.vy = -6; player.isJumping = true; playSound('bounce');
+                }
+            }
+
+            canvas.onclick = jump;
+
+            function resetPoint() {
+                ball.x = 70; ball.y = 90; ball.vx = 2; ball.vy = -2;
+            }
+
+            function gameLoop() {
+                ctx.fillStyle = '#1e293b'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#eab308'; ctx.fillRect(0, 170, canvas.width, 32);
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(178, 100, 4, 70);
+
+                player.y += player.vy; player.vy += 0.35;
+                if (player.y >= 150) { player.y = 150; player.vy = 0; player.isJumping = false; }
+
+                if (ai.x < ball.x - 5 && ai.x < 340) ai.x += 1.8;
+                else if (ai.x > ball.x + 5 && ai.x > 200) ai.x -= 1.8;
+
+                ball.x += ball.vx; ball.y += ball.vy; ball.vy += 0.2;
+
+                if (Math.abs(ball.x - 180) < 6 && ball.y > 100) { ball.vx = -ball.vx; playSound('bounce'); }
+
+                if (Math.hypot(ball.x - player.x, ball.y - player.y) < 20) {
+                    ball.vy = -5.5; ball.vx = 3.5; playSound('hit');
+                    for(let i=0; i<10; i++) particles.push(new Particle(ball.x, ball.y, '#ff0055'));
+                }
+
+                if (Math.hypot(ball.x - ai.x, ball.y - ai.y) < 20) {
+                    ball.vy = -5; ball.vx = -3.5; playSound('hit');
+                }
+
+                if (ball.y >= 165) {
+                    if (ball.x > 180) { score++; playSound('score'); }
+                    else { score = 0; playSound('fail'); }
+                    document.getElementById('volleyball-score').textContent = score;
+                    resetPoint();
+                }
+
+                particles.forEach((p, idx) => { p.update(); p.draw(ctx); if (p.alpha <= 0) particles.splice(idx, 1); });
+
+                ctx.fillStyle = '#00f0ff'; ctx.fillRect(player.x - 10, player.y - 15, 20, 30);
+                ctx.fillStyle = '#ff0055'; ctx.fillRect(ai.x - 10, ai.y - 15, 20, 30);
+                ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(ball.x, ball.y, 7, 0, Math.PI * 2); ctx.fill();
+
+                if (score > scores.volleyball) { scores.volleyball = score; localStorage.setItem('arcade_volleyball_high', score); updateHighScoreDisplay(); }
+                volleyballAnim = requestAnimationFrame(gameLoop);
+            }
+            if (volleyballAnim) cancelAnimationFrame(volleyballAnim);
+            volleyballAnim = requestAnimationFrame(gameLoop);
+        }
+
+        /* -------------------------------------------------------------
+           GAME 6: NEON TETRIS (NEW)
+        ------------------------------------------------------------- */
+        let tetrisAnim = null;
+        function startTetris() {
+            const canvas = document.getElementById('tetris-canvas');
+            const ctx = canvas.getContext('2d');
+            document.getElementById('tetris-overlay').classList.add('hidden');
+
+            const COLS = 10, ROWS = 16, SIZE = 12;
+            const grid = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+            let score = 0;
+            const colors = ['#000', '#00f0ff', '#ffea00', '#8000ff', '#00ff66', '#ff0055', '#ff6600', '#3b82f6'];
+
+            const SHAPES = [
+                [],
+                [[1,1,1,1]], // I
+                [[2,2],[2,2]], // O
+                [[0,3,0],[3,3,3]], // T
+                [[0,4,4],[4,4,0]], // S
+                [[5,5,0],[0,5,5]], // Z
+                [[6,0,0],[6,6,6]], // J
+                [[0,0,7],[7,7,7]]  // L
+            ];
+
+            let piece = getRandomPiece();
+            let dropCounter = 0, lastTime = 0;
+
+            function getRandomPiece() {
+                const type = Math.floor(Math.random() * 7) + 1;
+                return { shape: SHAPES[type], x: 3, y: 0, color: type };
+            }
+
+            function collide(p, g) {
+                for (let r = 0; r < p.shape.length; r++) {
+                    for (let c = 0; c < p.shape[r].length; c++) {
+                        if (p.shape[r][c] !== 0) {
+                            let newX = p.x + c, newY = p.y + r;
+                            if (newX < 0 || newX >= COLS || newY >= ROWS || (newY >= 0 && g[newY][newX])) return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            function merge(p, g) {
+                p.shape.forEach((row, r) => {
+                    row.forEach((val, c) => {
+                        if (val !== 0 && p.y + r >= 0) g[p.y + r][p.x + c] = p.color;
+                    });
+                });
+            }
+
+            function rotate(matrix) {
+                return matrix[0].map((_, i) => matrix.map(row => row[i]).reverse());
+            }
+
+            function handleKey(e) {
+                if (e.key === 'ArrowLeft') { piece.x--; if (collide(piece, grid)) piece.x++; }
+                if (e.key === 'ArrowRight') { piece.x++; if (collide(piece, grid)) piece.x--; }
+                if (e.key === 'ArrowDown') { piece.y++; if (collide(piece, grid)) piece.y--; }
+                if (e.key === 'ArrowUp') {
+                    const rot = rotate(piece.shape); const old = piece.shape;
+                    piece.shape = rot;
+                    if (collide(piece, grid)) piece.shape = old;
+                    else playSound('rotate');
+                }
+            }
+            window.onkeydown = handleKey;
+
+            function clearLines() {
+                let lines = 0;
+                for (let r = ROWS - 1; r >= 0; r--) {
+                    if (grid[r].every(val => val !== 0)) {
+                        grid.splice(r, 1);
+                        grid.unshift(Array(COLS).fill(0));
+                        lines++; r++;
+                    }
+                }
+                if (lines > 0) {
+                    score += lines * 100; playSound('score');
+                    document.getElementById('tetris-score').textContent = score;
+                }
+            }
+
+            function update(time = 0) {
+                const deltaTime = time - lastTime; lastTime = time; dropCounter += deltaTime;
+
+                if (dropCounter > 500) {
+                    piece.y++;
+                    if (collide(piece, grid)) {
+                        piece.y--; merge(piece, grid); playSound('bounce');
+                        clearLines(); piece = getRandomPiece();
+                        if (collide(piece, grid)) {
+                            playSound('fail');
+                            document.getElementById('tetris-title').textContent = "GAME OVER";
+                            document.getElementById('tetris-overlay').classList.remove('hidden');
+                            return;
+                        }
+                    }
+                    dropCounter = 0;
+                }
+
+                ctx.fillStyle = '#05050d'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                const offsetX = (canvas.width - COLS * SIZE) / 2;
+                const offsetY = (canvas.height - ROWS * SIZE) / 2;
+
+                ctx.strokeStyle = '#222'; ctx.strokeRect(offsetX, offsetY, COLS * SIZE, ROWS * SIZE);
+
+                grid.forEach((row, r) => {
+                    row.forEach((val, c) => {
+                        if (val !== 0) {
+                            ctx.fillStyle = colors[val];
+                            ctx.fillRect(offsetX + c * SIZE, offsetY + r * SIZE, SIZE - 1, SIZE - 1);
+                        }
+                    });
+                });
+
+                piece.shape.forEach((row, r) => {
+                    row.forEach((val, c) => {
+                        if (val !== 0) {
+                            ctx.fillStyle = colors[piece.color];
+                            ctx.fillRect(offsetX + (piece.x + c) * SIZE, offsetY + (piece.y + r) * SIZE, SIZE - 1, SIZE - 1);
+                        }
+                    });
+                });
+
+                if (score > scores.tetris) { scores.tetris = score; localStorage.setItem('arcade_tetris_high', score); updateHighScoreDisplay(); }
+                tetrisAnim = requestAnimationFrame(update);
+            }
+            if (tetrisAnim) cancelAnimationFrame(tetrisAnim);
+            tetrisAnim = requestAnimationFrame(update);
+        }
+
+        /* -------------------------------------------------------------
+           GAME 7: FLAPPY CYBER (NEW)
+        ------------------------------------------------------------- */
+        let flappyAnim = null;
+        function startFlappy() {
+            const canvas = document.getElementById('flappy-canvas');
+            const ctx = canvas.getContext('2d');
+            document.getElementById('flappy-overlay').classList.add('hidden');
+
+            let bird = { x: 60, y: 100, vy: 0, radius: 8 };
+            let pipes = [], frame = 0, score = 0;
+
+            function flap() {
+                bird.vy = -4.5; playSound('flap');
+            }
+
+            canvas.onclick = flap;
+            window.onkeydown = (e) => { if (e.key === ' ' || e.key === 'ArrowUp') flap(); };
+
+            function gameLoop() {
+                frame++; bird.vy += 0.25; bird.y += bird.vy;
+
+                if (frame % 75 === 0) {
+                    const gap = 60; const topH = Math.random() * (canvas.height - gap - 40) + 20;
+                    pipes.push({ x: canvas.width, top: topH, bottom: canvas.height - topH - gap, passed: false });
+                }
+
+                ctx.fillStyle = '#080c1a'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                for (let i = pipes.length - 1; i >= 0; i--) {
+                    let p = pipes[i]; p.x -= 2;
+
+                    ctx.fillStyle = '#00f0ff';
+                    ctx.fillRect(p.x, 0, 26, p.top);
+                    ctx.fillRect(p.x, canvas.height - p.bottom, 26, p.bottom);
+
+                    if (!p.passed && p.x < bird.x) {
+                        p.passed = true; score++; playSound('score');
+                        document.getElementById('flappy-score').textContent = score;
+                    }
+
+                    if (bird.x + bird.radius > p.x && bird.x - bird.radius < p.x + 26) {
+                        if (bird.y - bird.radius < p.top || bird.y + bird.radius > canvas.height - p.bottom) {
+                            gameOver(); return;
+                        }
+                    }
+
+                    if (p.x < -30) pipes.splice(i, 1);
+                }
+
+                if (bird.y > canvas.height || bird.y < 0) { gameOver(); return; }
+
+                ctx.fillStyle = '#ffea00'; ctx.beginPath(); ctx.arc(bird.x, bird.y, bird.radius, 0, Math.PI * 2); ctx.fill();
+
+                if (score > scores.flappy) { scores.flappy = score; localStorage.setItem('arcade_flappy_high', score); updateHighScoreDisplay(); }
+                flappyAnim = requestAnimationFrame(gameLoop);
+            }
+
+            function gameOver() {
+                playSound('fail');
+                document.getElementById('flappy-title').textContent = "GAME OVER";
+                document.getElementById('flappy-overlay').classList.remove('hidden');
+            }
+
+            if (flappyAnim) cancelAnimationFrame(flappyAnim);
+            flappyAnim = requestAnimationFrame(gameLoop);
+        }
+
+        /* -------------------------------------------------------------
+           GAME 8: SPACE DEFENDER (NEW)
+        ------------------------------------------------------------- */
+        let spaceAnim = null;
+        function startSpace() {
+            const canvas = document.getElementById('space-canvas');
+            const ctx = canvas.getContext('2d');
+            document.getElementById('space-overlay').classList.add('hidden');
+
+            let player = { x: 180, y: 180, width: 22, height: 10 };
+            let bullets = [], aliens = [], score = 0, dir = 1;
+
+            for (let r = 0; r < 3; r++) {
+                for (let c = 0; c < 8; c++) {
+                    aliens.push({ x: c * 32 + 40, y: r * 20 + 20, width: 18, height: 12, alive: true });
+                }
+            }
+
+            canvas.onmousemove = canvas.ontouchmove = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                player.x = (clientX - rect.left) * (canvas.width / rect.width) - player.width/2;
+            };
+
+            function shoot() {
+                bullets.push({ x: player.x + player.width/2, y: player.y, vy: -5 }); playSound('laser');
+            }
+
+            canvas.onclick = shoot;
+
+            function gameLoop() {
+                ctx.fillStyle = '#05050e'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = '#00ff66'; ctx.fillRect(player.x, player.y, player.width, player.height);
+
+                for (let i = bullets.length - 1; i >= 0; i--) {
+                    let b = bullets[i]; b.y += b.vy;
+                    ctx.fillStyle = '#ffea00'; ctx.fillRect(b.x - 1.5, b.y, 3, 6);
+
+                    aliens.forEach(a => {
+                        if (a.alive && b.x >= a.x && b.x <= a.x + a.width && b.y >= a.y && b.y <= a.y + a.height) {
+                            a.alive = false; b.y = -10; score += 10; playSound('hit');
+                            document.getElementById('space-score').textContent = score;
+                        }
+                    });
+
+                    if (b.y < 0) bullets.splice(i, 1);
+                }
+
+                let edge = false;
+                aliens.forEach(a => {
+                    if (a.alive) {
+                        a.x += dir * 0.8;
+                        if (a.x < 10 || a.x > canvas.width - 25) edge = true;
+                        ctx.fillStyle = '#ff0055'; ctx.fillRect(a.x, a.y, a.width, a.height);
+                    }
+                });
+
+                if (edge) {
+                    dir = -dir; aliens.forEach(a => a.y += 6);
+                }
+
+                if (aliens.some(a => a.alive && a.y >= player.y - 10)) {
+                    playSound('fail');
+                    document.getElementById('space-title').textContent = "INVADED!";
+                    document.getElementById('space-overlay').classList.remove('hidden');
+                    return;
+                }
+
+                if (score > scores.space) { scores.space = score; localStorage.setItem('arcade_space_high', score); updateHighScoreDisplay(); }
+                spaceAnim = requestAnimationFrame(gameLoop);
+            }
+            if (spaceAnim) cancelAnimationFrame(spaceAnim);
+            spaceAnim = requestAnimationFrame(gameLoop);
+        }
+
+        /* -------------------------------------------------------------
+           GAME 9: RETRO SNAKE
+        ------------------------------------------------------------- */
+        let snakeInterval = null;
+        function startSnake() {
+            const canvas = document.getElementById('snake-canvas');
+            const ctx = canvas.getContext('2d');
+            document.getElementById('snake-overlay').classList.add('hidden');
+
+            const gridSize = 12;
+            let snake = [{x: 10, y: 8}, {x: 9, y: 8}], dx = 1, dy = 0;
+            let food = {x: 20, y: 8}, score = 0;
+
+            function handleKey(e) {
+                if ((e.key === 'ArrowUp' || e.key === 'w') && dy === 0) { dx = 0; dy = -1; }
+                if ((e.key === 'ArrowDown' || e.key === 's') && dy === 0) { dx = 0; dy = 1; }
+                if ((e.key === 'ArrowLeft' || e.key === 'a') && dx === 0) { dx = -1; dy = 0; }
+                if ((e.key === 'ArrowRight' || e.key === 'd') && dx === 0) { dx = 1; dy = 0; }
+            }
+            window.onkeydown = handleKey;
+
+            if (snakeInterval) clearInterval(snakeInterval);
+            snakeInterval = setInterval(() => {
+                const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+
+                if (head.x < 0 || head.x >= canvas.width/gridSize || head.y < 0 || head.y >= canvas.height/gridSize || snake.some(s => s.x === head.x && s.y === head.y)) {
+                    clearInterval(snakeInterval); playSound('fail');
+                    document.getElementById('snake-title').textContent = "GAME OVER";
+                    document.getElementById('snake-overlay').classList.remove('hidden');
+                    return;
+                }
+
+                snake.unshift(head);
+                if (head.x === food.x && head.y === food.y) {
+                    score += 10; playSound('score'); document.getElementById('snake-score').textContent = score;
+                    food = { x: Math.floor(Math.random() * (canvas.width/gridSize)), y: Math.floor(Math.random() * (canvas.height/gridSize)) };
+                } else snake.pop();
+
+                ctx.fillStyle = '#05050d'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#ff0055'; ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 1, gridSize - 1);
+                ctx.fillStyle = '#00ff66'; snake.forEach(p => ctx.fillRect(p.x * gridSize, p.y * gridSize, gridSize - 1, gridSize - 1));
+
+                if (score > scores.snake) { scores.snake = score; localStorage.setItem('arcade_snake_high', score); updateHighScoreDisplay(); }
+            }, 75);
+        }
+
+        /* -------------------------------------------------------------
+           GAME 10: CYBER PONG
+        ------------------------------------------------------------- */
+        let pongAnimationFrame = null;
+        function startPong() {
+            const canvas = document.getElementById('pong-canvas');
+            const ctx = canvas.getContext('2d');
+            document.getElementById('pong-overlay').classList.add('hidden');
+
+            let playerY = 80, aiY = 80, ballX = 180, ballY = 100, ballSpeedX = 3.5, ballSpeedY = 2.5, score = 0;
+
+            canvas.onmousemove = canvas.ontouchmove = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                playerY = (clientY - rect.top) * (canvas.height / rect.height) - 22;
+            };
+
+            function gameLoop() {
+                ballX += ballSpeedX; ballY += ballSpeedY;
+                if (aiY + 22 < ballY) aiY += 2.2; else aiY -= 2.2;
+
+                if (ballY <= 0 || ballY >= canvas.height) { ballSpeedY = -ballSpeedY; playSound('bounce'); }
+
+                if (ballX <= 16 && ballY >= playerY && ballY <= playerY + 44) {
+                    ballSpeedX = -ballSpeedX * 1.05; score += 5; playSound('score');
+                    document.getElementById('pong-score').textContent = score;
+                }
+                if (ballX >= canvas.width - 16 && ballY >= aiY && ballY <= aiY + 44) ballSpeedX = -ballSpeedX;
+
+                if (ballX < 0) {
+                    playSound('fail'); document.getElementById('pong-title').textContent = "GAME OVER";
+                    document.getElementById('pong-overlay').classList.remove('hidden'); return;
+                }
+
+                ctx.fillStyle = '#05050d'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#00f0ff'; ctx.fillRect(10, playerY, 6, 44);
+                ctx.fillStyle = '#ff0055'; ctx.fillRect(canvas.width - 16, aiY, 6, 44);
+                ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(ballX, ballY, 4, 0, Math.PI * 2); ctx.fill();
+
+                if (score > scores.pong) { scores.pong = score; localStorage.setItem('arcade_pong_high', score); updateHighScoreDisplay(); }
+                pongAnimationFrame = requestAnimationFrame(gameLoop);
+            }
+            if (pongAnimationFrame) cancelAnimationFrame(pongAnimationFrame);
+            pongAnimationFrame = requestAnimationFrame(gameLoop);
+        }
+
+        /* -------------------------------------------------------------
+           GAME 11: BRICK BREAKER
+        ------------------------------------------------------------- */
+        let brickAnimationFrame = null;
+        function startBrick() {
+            const canvas = document.getElementById('brick-canvas');
+            const ctx = canvas.getContext('2d');
+            document.getElementById('brick-overlay').classList.add('hidden');
+
+            let paddleX = 150, x = 180, y = 170, dx = 2.2, dy = -2.2, score = 0;
+            let bricks = [];
+            for (let c = 0; c < 8; c++) { bricks[c] = []; for (let r = 0; r < 3; r++) bricks[c][r] = { status: 1 }; }
+
+            canvas.onmousemove = canvas.ontouchmove = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                paddleX = (clientX - rect.left) * (canvas.width / rect.width) - 27;
+            };
+
+            function draw() {
+                ctx.fillStyle = '#05050d'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                for (let c = 0; c < 8; c++) {
+                    for (let r = 0; r < 3; r++) {
+                        if (bricks[c][r].status === 1) {
+                            let bx = c * 43 + 12, by = r * 15 + 20;
+                            if (x > bx && x < bx + 38 && y > by && y < by + 10) {
+                                dy = -dy; bricks[c][r].status = 0; score += 10; playSound('score');
+                                document.getElementById('brick-score').textContent = score;
+                            }
+                            ctx.fillStyle = r === 0 ? '#ff0055' : r === 1 ? '#8000ff' : '#00f0ff';
+                            ctx.fillRect(bx, by, 38, 10);
+                        }
+                    }
+                }
+
+                ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#ff0055'; ctx.fillRect(paddleX, 185, 55, 7);
+
+                if (x + dx > canvas.width - 4 || x + dx < 4) dx = -dx;
+                if (y + dy < 4) dy = -dy;
+                else if (y + dy > 180) {
+                    if (x > paddleX && x < paddleX + 55) dy = -dy;
+                    else {
+                        playSound('fail'); document.getElementById('brick-title').textContent = "GAME OVER";
+                        document.getElementById('brick-overlay').classList.remove('hidden'); return;
+                    }
+                }
+
+                x += dx; y += dy;
+                if (score > scores.brick) { scores.brick = score; localStorage.setItem('arcade_brick_high', score); updateHighScoreDisplay(); }
+                brickAnimationFrame = requestAnimationFrame(draw);
+            }
+            if (brickAnimationFrame) cancelAnimationFrame(brickAnimationFrame);
+            draw();
+        }
+
+        /* -------------------------------------------------------------
+           GAME 12: MEMORY MATCH
+        ------------------------------------------------------------- */
+        function startMemory() {
+            document.getElementById('memory-overlay').classList.add('hidden');
+            const grid = document.getElementById('memory-grid'); grid.innerHTML = '';
+            const icons = ['fa-ghost', 'fa-gamepad', 'fa-bolt', 'fa-heart', 'fa-star', 'fa-skull'];
+            const deck = [...icons, ...icons].sort(() => Math.random() - 0.5);
+
+            let firstCard = null, secondCard = null, lockBoard = false, moves = 0, matches = 0;
+            document.getElementById('memory-score').textContent = moves;
+
+            deck.forEach((icon) => {
+                const card = document.createElement('div');
+                card.className = 'bg-gray-800 rounded-lg flex items-center justify-center cursor-pointer text-gray-800 transition transform hover:scale-105 select-none';
+                card.dataset.icon = icon;
+                card.innerHTML = `<i class="fa-solid ${icon} text-lg opacity-0 transition duration-200"></i>`;
+
+                card.onclick = () => {
+                    if (lockBoard || card === firstCard || card.classList.contains('matched')) return;
+                    playSound('bounce');
+                    card.classList.remove('bg-gray-800'); card.classList.add('bg-arcade-neonYellow', 'text-black');
+                    card.querySelector('i').classList.remove('opacity-0');
+
+                    if (!firstCard) { firstCard = card; return; }
+                    secondCard = card; moves++; document.getElementById('memory-score').textContent = moves; lockBoard = true;
+
+                    if (firstCard.dataset.icon === secondCard.dataset.icon) {
+                        playSound('score'); firstCard.classList.add('matched'); secondCard.classList.add('matched');
+                        [firstCard, secondCard] = [null, null]; lockBoard = false; matches++;
+                        if (matches === icons.length) {
+                            setTimeout(() => {
+                                playSound('score'); document.getElementById('memory-title').textContent = "COMPLETED!";
+                                document.getElementById('memory-overlay').classList.remove('hidden');
+                                if (!scores.memory || moves < scores.memory) {
+                                    scores.memory = moves; localStorage.setItem('arcade_memory_high', moves); updateHighScoreDisplay();
+                                }
+                            }, 500);
+                        }
+                    } else {
+                        setTimeout(() => {
+                            [firstCard, secondCard].forEach(c => {
+                                c.className = 'bg-gray-800 rounded-lg flex items-center justify-center cursor-pointer text-gray-800 transition transform hover:scale-105 select-none';
+                                c.querySelector('i').classList.add('opacity-0');
+                            });
+                            [firstCard, secondCard] = [null, null]; lockBoard = false;
+                        }, 700);
+                    }
+                };
+                grid.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>
